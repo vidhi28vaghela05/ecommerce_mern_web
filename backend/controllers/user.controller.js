@@ -29,7 +29,15 @@ module.exports.registerUser = async (req, res) => {
 
   let token = await user.generateAuthToken();
 
-  res.status(200).json({ token, user });
+  res.status(200).json({
+    token,
+    user: {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  });
 };
 
 module.exports.loginUser = async (req, res) => {
@@ -54,9 +62,22 @@ module.exports.loginUser = async (req, res) => {
   }
 
   const token = checkUser.generateAuthToken();
-  res.cookie("token", token);
 
-  res.status(200).json({ token, checkUser });
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  res.status(200).json({
+    token,
+    user: {
+      _id: checkUser._id,
+      username: checkUser.username,
+      email: checkUser.email,
+      role: checkUser.role,
+    },
+  });
 };
 
 module.exports.profile = (req, res) => {

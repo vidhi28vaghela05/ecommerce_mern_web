@@ -25,7 +25,7 @@ export const ProtectedRoute = () => {
 };
 
 // Public route - redirect to home if already logged in
-export const PublicRoute = ({ children }) => {
+export const PublicRoute = () => {
   const { centerData, loading } = useContext(DataContext);
 
   if (loading) {
@@ -43,11 +43,11 @@ export const PublicRoute = ({ children }) => {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return <Outlet />;
 };
 
 // Admin route - redirect to home if not admin
-export const AdminRoute = ({ children }) => {
+export const AdminRoute = () => {
   const { centerData, loading } = useContext(DataContext);
 
   if (loading) {
@@ -65,5 +65,5 @@ export const AdminRoute = ({ children }) => {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return <Outlet />;
 };

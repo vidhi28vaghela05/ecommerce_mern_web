@@ -47,14 +47,14 @@ const Navbar = () => {
               >
                 {centerData.username}
               </Link>
-              {centerData.role === 'admin' && (
-                <Link
-                  to="/admin"
-                  className="text-gray-700 hover:text-blue-600"
-                >
-                  Admin
-                </Link>
-              )}
+               {centerData.role === 'admin' && (
+                 <Link
+                   to="/admin"
+                   className="text-gray-700 hover:text-blue-600 font-medium"
+                 >
+                   Admin Panel
+                 </Link>
+               )}
               <button
                 onClick={handleLogout}
                 className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"

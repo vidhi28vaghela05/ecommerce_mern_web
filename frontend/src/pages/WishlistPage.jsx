@@ -14,41 +14,34 @@ const WishlistPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!centerData) {
-      navigate('/login');
-      return;
-    }
+   useEffect(() => {
+     if (!centerData) {
+       navigate('/login');
+       return;
+     }
 
-    const fetchWishlist = async () => {
-      try {
-        setLoading(true);
-        const response = await wishlistAPI.getWishlist();
-        const wishlistData = response.data.wishlist;
-        
-        if (wishlistData && wishlistData.productIds) {
-          // Fetch product details
-          const productDetails = [];
-          for (const id of wishlistData.productIds) {
-            try {
-              const prodResponse = await productAPI.getSingleProduct(id);
-              productDetails.push(prodResponse.data.product);
-            } catch (err) {
-              console.error('Error fetching product:', err);
-            }
-          }
-          setProducts(productDetails);
-        }
-      } catch (err) {
-        console.error('Error fetching wishlist:', err);
-        setError('Failed to load wishlist');
-      } finally {
-        setLoading(false);
-      }
-    };
+     const fetchWishlist = async () => {
+       try {
+         setLoading(true);
+         const response = await wishlistAPI.getWishlist();
+         const wishlistData = response.data.wishlist;
+         
+         if (wishlistData && wishlistData.productIds && wishlistData.productIds.length > 0) {
+           // productIds is already populated with full product objects
+           setProducts(wishlistData.productIds);
+         } else {
+           setProducts([]);
+         }
+       } catch (err) {
+         console.error('Error fetching wishlist:', err);
+         setError('Failed to load wishlist');
+       } finally {
+         setLoading(false);
+       }
+     };
 
-    fetchWishlist();
-  }, [centerData, navigate]);
+     fetchWishlist();
+   }, [centerData, navigate]);
 
   const handleRemoveFromWishlist = async (productId) => {
     try {
