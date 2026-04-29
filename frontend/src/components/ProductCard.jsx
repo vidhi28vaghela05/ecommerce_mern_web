@@ -22,9 +22,11 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist }) => {
     try {
       setLoading(true);
       await wishlistAPI.addToWishlist(product._id);
+      alert('Added to wishlist!');
       onAddToWishlist && onAddToWishlist();
     } catch (error) {
       console.error('Error adding to wishlist:', error);
+      alert('Failed to add to wishlist: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }

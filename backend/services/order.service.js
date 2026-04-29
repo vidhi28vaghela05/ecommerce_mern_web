@@ -64,6 +64,15 @@ module.exports.UpdateOrderStatus = async (orderId, status) => {
   );
 };
 
+// update order payment
+module.exports.UpdateOrderPayment = async (orderId, paymentId, paymentStatus) => {
+  return await orderModel.findOneAndUpdate(
+    { _id: orderId },
+    { paymentId, paymentStatus },
+    { new: true }
+  );
+};
+
 // cancel order (refund stock)
 module.exports.CancelOrder = async (orderId) => {
   const order = await orderModel.findOne({ _id: orderId });

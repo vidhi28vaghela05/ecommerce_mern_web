@@ -20,25 +20,29 @@ const WishlistPage = () => {
        return;
      }
 
-     const fetchWishlist = async () => {
-       try {
-         setLoading(true);
-         const response = await wishlistAPI.getWishlist();
-         const wishlistData = response.data.wishlist;
-         
-         if (wishlistData && wishlistData.productIds && wishlistData.productIds.length > 0) {
-           // productIds is already populated with full product objects
-           setProducts(wishlistData.productIds);
-         } else {
-           setProducts([]);
-         }
-       } catch (err) {
-         console.error('Error fetching wishlist:', err);
-         setError('Failed to load wishlist');
-       } finally {
-         setLoading(false);
-       }
-     };
+      const fetchWishlist = async () => {
+        try {
+          setLoading(true);
+          setError('');
+          const response = await wishlistAPI.getWishlist();
+          console.log('Wishlist API response:', response.data);
+
+          const wishlistData = response.data.wishlist;
+          console.log('Wishlist data:', wishlistData);
+
+          if (wishlistData && Array.isArray(wishlistData.productIds) && wishlistData.productIds.length > 0) {
+            setProducts(wishlistData.productIds);
+          } else {
+            setProducts([]);
+          }
+        } catch (err) {
+          console.error('Error fetching wishlist:', err);
+          console.error('Response error:', err.response?.data);
+          setError('Failed to load wishlist: ' + (err.response?.data?.message || err.message));
+        } finally {
+          setLoading(false);
+        }
+      };
 
      fetchWishlist();
    }, [centerData, navigate]);
@@ -49,7 +53,7 @@ const WishlistPage = () => {
       setProducts(products.filter((p) => p._id !== productId));
     } catch (error) {
       console.error('Error removing from wishlist:', error);
-      alert('Error removing from wishlist');
+      alert('Error removing from wishlist: ' + (error.response?.data?.message || error.message));
     }
   };
 

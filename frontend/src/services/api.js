@@ -58,12 +58,19 @@ export const orderAPI = {
   cancelOrder: (id) => api.delete(`/order/${id}`),
 };
 
+// Payment APIs
+export const paymentAPI = {
+  createPaymentIntent: (amount, currency) =>
+    api.post('/payment/create', { amount, currency }),
+  confirmPayment: (paymentIntentId, orderId) =>
+    api.post('/payment/confirm', { paymentIntentId, orderId }),
+};
+
 // Wishlist APIs
 export const wishlistAPI = {
   addToWishlist: (productId) => api.post('/wishlist/add', { productId }),
   getWishlist: () => api.get('/wishlist/all'),
-  removeFromWishlist: (productId) =>
-    api.delete('/wishlist/remove', { data: { productId } }),
+  removeFromWishlist: (productId) => api.delete(`/wishlist/${productId}`),
 };
 
 // Chat APIs

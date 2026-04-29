@@ -39,7 +39,7 @@ module.exports.GetWishlist = async (req, res) => {
 module.exports.RemoveFromWishlist = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { productId } = req.body;
+    const productId = req.params.id; // Get productId from URL params
 
     await wishlistService.RemoveFromWishlist({ userId, productId });
 
