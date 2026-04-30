@@ -132,7 +132,7 @@ const renderOrders = () => {
             <h4 class="text-lg font-bold">Order #${order._id.slice(-6).toUpperCase()}</h4>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">${order.user?.name || 'Guest'} • ${money(order.totalAmount)}</p>
           </div>
-          <select class="update-order-status rounded-xl border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" data-id="${order._id}">
+          <select class="order-status rounded-xl border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" data-id="${order._id}">
             <option value="pending" ${order.status === "pending" ? "selected" : ""}>Pending</option>
             <option value="shipped" ${order.status === "shipped" ? "selected" : ""}>Shipped</option>
             <option value="delivered" ${order.status === "delivered" ? "selected" : ""}>Delivered</option>
@@ -402,15 +402,26 @@ const bindEvents = () => {
       toast("User deleted.");
     }
 
+
     const refundBtn = event.target.closest(".refund-payment");
     if (refundBtn) {
+      const orderId = refundBtn.dataset.id;
+      if (!orderId) return;
+      
       if (!confirm("Are you sure you want to refund this payment?")) return;
+      
       try {
-        await adminApi.updatePaymentStatus(refundBtn.dataset.id, "refunded");
+        refundBtn.disabled = true;
+        refundBtn.textContent = "Processing...";
+        
+        await adminApi.updatePaymentStatus(orderId, "refunded");
         await loadDashboard();
         toast("Payment refunded successfully.");
       } catch (error) {
+        console.error("Refund error:", error);
         toast(error.message);
+        refundBtn.disabled = false;
+        refundBtn.textContent = "Issue Refund";
       }
     }
   });

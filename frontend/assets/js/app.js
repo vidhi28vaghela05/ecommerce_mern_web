@@ -68,6 +68,7 @@ const els = {
   modalWishlist: document.getElementById("modal-wishlist"),
   scrollTop: document.getElementById("scroll-top"),
   navSearchInput: document.getElementById("nav-search-input"),
+  paginationContainer: document.getElementById("pagination-container"),
 };
 
 const money = (value) =>
@@ -205,14 +206,21 @@ const renderProducts = () => {
       : `<div class="rounded-3xl border border-dashed border-slate-300 p-8 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">No products matched your current filters.</div>`;
   }
 
+  if (els.paginationContainer) {
+    els.paginationContainer.classList.toggle("hidden", state.totalPages <= 1);
+  }
   if (els.paginationLabel) {
     els.paginationLabel.textContent = `Page ${state.currentPage} of ${state.totalPages}`;
   }
   if (els.prevPage) {
     els.prevPage.disabled = state.currentPage <= 1;
+    els.prevPage.classList.toggle("opacity-50", state.currentPage <= 1);
+    els.prevPage.classList.toggle("cursor-not-allowed", state.currentPage <= 1);
   }
   if (els.nextPage) {
     els.nextPage.disabled = state.currentPage >= state.totalPages;
+    els.nextPage.classList.toggle("opacity-50", state.currentPage >= state.totalPages);
+    els.nextPage.classList.toggle("cursor-not-allowed", state.currentPage >= state.totalPages);
   }
 };
 
@@ -686,6 +694,12 @@ const bindEvents = () => {
       if (document.getElementById("section-shop").classList.contains("section-hidden")) {
         switchSection("shop");
       }
+      
+      // Reset filters for a clean individual search from navbar
+      state.filters.category = "";
+      state.filters.sort = "";
+      els.categoryFilter.value = "";
+      els.sortFilter.value = "";
       
       els.searchInput.value = val;
       state.currentPage = 1;
