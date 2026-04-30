@@ -23,6 +23,7 @@ const els = {
   productCategorySelect: document.getElementById("product-category-select"),
   productReset: document.getElementById("product-reset"),
   categoryReset: document.getElementById("category-reset"),
+  themeToggle: document.getElementById("theme-toggle"),
 };
 
 const money = (value) =>
@@ -221,7 +222,21 @@ const formDataFromProductForm = () => {
   return formData;
 };
 
+const setTheme = (theme) => {
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+  storage.setTheme(theme);
+};
+
 const bindEvents = () => {
+  els.themeToggle.addEventListener("click", () => {
+    const nextTheme = document.documentElement.classList.contains("dark") ? "light" : "dark";
+    setTheme(nextTheme);
+  });
+
   document.querySelectorAll(".admin-tab").forEach((button) => {
     button.addEventListener("click", () => {
       document.querySelectorAll(".admin-tab").forEach((item) => {
@@ -346,6 +361,7 @@ const bindEvents = () => {
 };
 
 const init = async () => {
+  setTheme(storage.getTheme());
   bindEvents();
   const isAdmin = await ensureAdmin();
   if (isAdmin) {

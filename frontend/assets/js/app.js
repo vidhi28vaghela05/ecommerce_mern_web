@@ -248,9 +248,10 @@ const handleWishlistToggle = async (productId) => {
       state.wishlist.push(productId);
       showToast("Added to wishlist");
     }
-    // Re-render current catalog and wishlist
+    // Re-render current catalog, cart and wishlist
     renderFeatured();
     renderProducts();
+    renderCart();
     await loadWishlist();
   } catch (error) {
     showToast(error.message, true);
@@ -282,6 +283,9 @@ const renderCart = () => {
               <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">${money(item.price)} each</p>
             </div>
             <div class="flex items-center gap-3">
+              <button class="wishlist-toggle rounded-xl border border-slate-200 px-3 py-2 transition hover:bg-rose-50 dark:border-slate-700 dark:hover:bg-rose-950/20 ${state.wishlist.includes(item.product._id || item.product) ? 'bg-rose-500 text-white border-rose-500' : ''}" data-id="${item.product._id || item.product}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${state.wishlist.includes(item.product._id || item.product) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${state.wishlist.includes(item.product._id || item.product) ? 'text-white' : 'text-rose-500'}"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              </button>
               <input type="number" min="1" value="${item.quantity}" data-qty="${item._id}" class="cart-qty w-20 rounded-xl border border-slate-200 px-3 py-2 text-center dark:border-slate-700 dark:bg-slate-950" />
               <button class="remove-cart rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600" data-id="${item._id}">Remove</button>
             </div>
@@ -324,6 +328,11 @@ const renderOrders = () => {
                     order.status === 'shipped' ? 'bg-blue-100 text-blue-700' : 
                     'bg-slate-100 text-slate-700'
                   }">${order.status}</span>
+                  <span class="rounded-full px-4 py-2 text-sm font-semibold capitalize ${
+                    order.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 
+                    order.paymentStatus === 'failed' ? 'bg-rose-100 text-rose-700' : 
+                    'bg-amber-100 text-amber-700'
+                  }">${order.paymentStatus === 'paid' ? 'Payment Success' : 'Payment Pending'}</span>
                   <span class="text-lg font-bold">${money(order.totalAmount)}</span>
                 </div>
               </div>
@@ -698,6 +707,10 @@ const bindEvents = () => {
       } finally {
         setLoading(false);
       }
+    }
+
+    if (wishlistBtn) {
+      handleWishlistToggle(wishlistBtn.dataset.id);
     }
   });
 
