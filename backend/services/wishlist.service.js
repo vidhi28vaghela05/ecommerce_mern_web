@@ -3,6 +3,10 @@ const productModel = require("../models/product.model"); // Ensure product model
 
 // add items into wishlist
 module.exports.AddToWishlist = async ({ userId, productId }) => {
+  if (!productId || productId === "") {
+    throw new Error("Invalid Product ID");
+  }
+
   try {
     let wishlist = await wishlistModel.findOne({ userId });
 
@@ -66,6 +70,9 @@ module.exports.GetWishlist = async (userId) => {
 
 // remove item from wishlist
 module.exports.RemoveFromWishlist = async ({ userId, productId }) => {
+  if (!productId || productId === "") {
+    throw new Error("Invalid Product ID");
+  }
   let wishlist = await wishlistModel.findOne({ userId });
 
   if (!wishlist) throw new Error("Wishlist Not Found !!");
