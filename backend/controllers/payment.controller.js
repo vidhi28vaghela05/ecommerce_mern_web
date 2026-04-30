@@ -1,98 +1,111 @@
-const stripe = require("../config/stripe.config");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { getOrCreateCart } = require("../services/cart.service");
+const Product = require("../models/product.model");
 const orderService = require("../services/order.service");
 
-// Create payment intent
-module.exports.CreatePaymentIntent = async (req, res) => {
+const createCheckoutSession = async (req, res, next) => {
   try {
-    const { amount, currency = "inr" } = req.body;
-
-    if (!amount) {
-      return res.status(400).json({ message: "Amount is required" });
+    const { shippingAddress } = req.body;
+    if (!shippingAddress) {
+      throw new Error("Shipping address is required.");
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to smallest currency unit (paise for INR)
-      currency,
-      metadata: {
-        userId: req.user.id,
-      },
-    });
+    const cart = await getOrCreateCart(req.user._id);
+    if (!cart.items.length) {
+      throw new Error("Your cart is empty.");
+    }
 
-    res.status(200).json({
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-    });
-  } catch (error) {
-    console.error("Stripe payment intent error:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Confirm payment (called after payment succeeds)
-module.exports.ConfirmPayment = async (req, res) => {
-  try {
-    const { paymentIntentId, orderId } = req.body;
-
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-    if (paymentIntent.status === "succeeded") {
-      // Update order with payment details
-      await orderService.UpdateOrderPayment(orderId, paymentIntentId, "paid");
-
-      return res.status(200).json({
-        message: "Payment confirmed",
-        order: await orderService.GetOrderById(orderId),
+    const line_items = [];
+    for (const item of cart.items) {
+      const product = await Product.findById(item.product._id || item.product);
+      if (!product || !product.isActive) continue;
+      
+      line_items.push({
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: product.name,
+            images: product.images && product.images.length > 0 ? [product.images[0]] : [],
+          },
+          unit_amount: Math.round(product.price * 100),
+        },
+        quantity: item.quantity,
       });
     }
 
-    res.status(400).json({ message: "Payment not successful" });
+    // Add shipping fee as a line item if applicable
+    const subtotal = cart.items.reduce((sum, item) => {
+        const price = item.product.price || 0;
+        return sum + (price * item.quantity);
+    }, 0);
+    const shippingFee = subtotal > 1000 ? 0 : 99;
+    if (shippingFee > 0) {
+      line_items.push({
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: "Shipping Fee",
+          },
+          unit_amount: Math.round(shippingFee * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items,
+      mode: "payment",
+      success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/#orders?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/#cart`,
+      customer_email: req.user.email,
+      metadata: {
+        userId: req.user._id.toString(),
+        shippingAddress: JSON.stringify(shippingAddress),
+      },
+    });
+
+    res.json({ id: session.id, url: session.url });
   } catch (error) {
-    console.error("Payment confirmation error:", error);
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-// Stripe webhook handler
-module.exports.HandleWebhook = async (req, res) => {
-  const sig = req.headers["stripe-signature"];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "whsec_your_test_webhook_secret";
-
-  let event;
-
+const verifyPayment = async (req, res, next) => {
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-  } catch (err) {
-    console.error("Webhook signature verification failed:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  try {
-    switch (event.type) {
-      case "payment_intent.succeeded": {
-        const paymentIntent = event.data.object;
-        const orderId = paymentIntent.metadata.orderId;
-
-        if (orderId) {
-          await orderService.UpdateOrderPayment(orderId, paymentIntent.id, "paid");
-        }
-        break;
-      }
-      case "payment_intent.payment_failed": {
-        const paymentIntent = event.data.object;
-        const orderId = paymentIntent.metadata.orderId;
-
-        if (orderId) {
-          await orderService.UpdateOrderPayment(orderId, paymentIntent.id, "failed");
-        }
-        break;
-      }
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+    const { session_id } = req.query;
+    if (!session_id) {
+      throw new Error("Session ID is required.");
     }
 
-    res.status(200).json({ received: true });
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    if (session.payment_status === "paid") {
+      const Order = require("../models/order.model");
+      const existingOrder = await Order.findOne({ stripeSessionId: session_id });
+      
+      if (existingOrder) {
+        return res.json({ message: "Order already processed.", order: existingOrder });
+      }
+
+      const shippingAddress = JSON.parse(session.metadata.shippingAddress);
+      
+      // Use createOrder service
+      const order = await orderService.createOrder(req.user, shippingAddress);
+      order.paymentMethod = "Stripe";
+      order.stripeSessionId = session_id;
+      order.paymentStatus = "paid";
+      await order.save();
+
+      res.json({ message: "Payment verified and order created.", order });
+    } else {
+      res.status(400).json({ message: "Payment not completed." });
+    }
   } catch (error) {
-    console.error("Webhook processing error:", error);
-    res.status(500).json({ error: "Webhook handler failed" });
+    next(error);
   }
+};
+
+module.exports = {
+  createCheckoutSession,
+  verifyPayment,
 };

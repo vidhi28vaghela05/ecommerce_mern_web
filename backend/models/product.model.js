@@ -1,42 +1,49 @@
 const mongoose = require("mongoose");
 
-let productSchema = mongoose.Schema(
+const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      minLength: 3,
       required: true,
+      trim: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
     },
     description: {
       type: String,
-      minLength: 10,
       required: true,
-    },
-    stock: {
-      type: Number,
-      minLength: 0,
-      required: true,
-      default: 0,
+      trim: true,
     },
     price: {
       type: Number,
-      minLength: 0,
       required: true,
-      default: 0,
+      min: 0,
     },
-    discount: {
+    compareAtPrice: {
       type: Number,
-      minLength: 0,
+      default: 0,
+      min: 0,
+    },
+    stock: {
+      type: Number,
+      required: true,
+      min: 0,
       default: 0,
     },
-    isNewproduct: {
-      type: Boolean,
-      default: true,
+    brand: {
+      type: String,
+      trim: true,
+      default: "",
     },
     sku: {
       type: String,
-      unique: true,
       required: true,
+      unique: true,
+      trim: true,
     },
     images: [
       {
@@ -44,17 +51,28 @@ let productSchema = mongoose.Schema(
         required: true,
       },
     ],
-    brand: {
-      type: String,
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "category",
       required: true,
     },
-    category: {
+    categoryName: {
       type: String,
       required: true,
-      minLength: 3,
+      trim: true,
+    },
+    featured: {
+      type: Boolean,
+      default: false,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
+
+productSchema.index({ name: "text", description: "text", brand: "text" });
 
 module.exports = mongoose.model("product", productSchema);

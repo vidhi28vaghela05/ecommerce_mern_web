@@ -1,133 +1,75 @@
 const userService = require("../services/user.service");
-const { validationResult } = require("express-validator");
-const userModel = require("../models/user.model");
 
-module.exports.registerUser = async (req, res) => {
-  const error = validationResult(req);
-
-  if (!error.isEmpty()) {
-    return res.status(400).json({ error: error.array() });
-  }
-
-  const { username, email, password, role } = req.body;
-
-  // check user is already registed or not
-  let isExist = await userModel.findOne({ email: email });
-
-  if (isExist) {
-    return res.status(400).json({ message: "user is already register" });
-  }
-
-  const hashPassword = await userModel.hashPassword(password);
-
-  const user = await userService.createUser({
-    username,
-    email,
-    password: hashPassword,
-    role,
-  });
-
-  let token = await user.generateAuthToken();
-
-  res.status(200).json({
-    token,
-    user: {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-    },
-  });
-};
-
-module.exports.loginUser = async (req, res) => {
-  let error = validationResult(req);
-
-  if (!error.isEmpty()) {
-    return res.status(400).json({ error: error.array() });
-  }
-
-  const { email, password } = req.body;
-
-  let checkUser = await userModel.findOne({ email: email }).select("+password");
-
-  if (!checkUser) {
-    return res.status(401).json({ message: "Email is invaild" });
-  }
-
-  const isMatch = await checkUser.comparePassword(password);
-
-  if (!isMatch) {
-    return res.status(400).json({ message: "Wrong Password" });
-  }
-
-  const token = checkUser.generateAuthToken();
-
+const attachTokenCookie = (res, token) => {
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  });
-
-  res.status(200).json({
-    token,
-    user: {
-      _id: checkUser._id,
-      username: checkUser.username,
-      email: checkUser.email,
-      role: checkUser.role,
-    },
+    sameSite: "lax",
+    secure: false,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
 
-module.exports.profile = (req, res) => {
-  res.status(200).json({ user: req.user });
-};
-
-module.exports.logout = (req, res) => {
-  res.clearCookie("token");
-  res.status(200).json({ message: "User logout Successfully !!" });
-};
-
-module.exports.updateUser = async (req, res) => {
-  const userId = req.user.id;
-  console.log(userId);
-
-  const { username, email } = req.body;
-
-  const updateUser = await userService.updateUser({ userId, username, email });
-
-  res
-    .status(200)
-    .json({ message: "User Data Updated Successfully,", updateUser });
-};
-
-// forget password --> send email for reset password
-module.exports.forgetPassword = async (req, res) => {
+const register = async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { token, user } = await userService.registerUser(req.body);
+    attachTokenCookie(res, token);
+    res.status(201).json({ message: "Registration successful.", token, user });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    await userService.forgetPassword(email);
+const login = async (req, res, next) => {
+  try {
+    const { token, user } = await userService.loginUser(req.body);
+    attachTokenCookie(res, token);
+    res.json({ message: "Login successful.", token, user });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    return res.status(200).json({
-      message: "Email Send your Registed Mail Sucessfully. Check Your Mail",
+const adminLogin = async (req, res, next) => {
+  try {
+    const { token, user } = await userService.loginUser({
+      ...req.body,
+      requireAdmin: true,
     });
+    attachTokenCookie(res, token);
+    res.json({ message: "Admin login successful.", token, user });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({ message: error.message });
+    next(error);
   }
 };
 
-// reset Password
-module.exports.resetPassword = async (req, res) => {
+const me = async (req, res, next) => {
   try {
-    const token = req.params.token;
-    const { newPassword } = req.body;
-
-    await userService.resetPassword({ token, newPassword });
-
-    return res.status(200).json({ message: "Password Reset Successfully " });
+    const user = await userService.getUserProfile(req.user._id);
+    res.json({ user });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    next(error);
   }
+};
+
+const logout = async (_req, res) => {
+  res.clearCookie("token");
+  res.json({ message: "Logged out successfully." });
+};
+
+const updateProfile = async (req, res, next) => {
+  try {
+    const user = await userService.updateUserProfile(req.user._id, req.body);
+    res.json({ message: "Profile updated successfully.", user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  adminLogin,
+  me,
+  updateProfile,
+  logout,
 };

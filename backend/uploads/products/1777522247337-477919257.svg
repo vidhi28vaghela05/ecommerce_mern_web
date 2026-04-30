@@ -1,0 +1,40 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="1200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f172a" />
+      <stop offset="1" stop-color="#3b82f6" />
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1200" y2="1200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="1" stop-color="#e2e8f0" stop-opacity="0.95" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="1200" rx="240" fill="url(#bg)" />
+  <rect x="120" y="120" width="960" height="960" rx="120" fill="url(#card)" />
+  <rect x="200" y="220" width="360" height="160" rx="32" fill="#2563eb" />
+  <rect x="200" y="420" width="360" height="40" rx="20" fill="#1e293b" opacity="0.1" />
+  <rect x="200" y="480" width="360" height="40" rx="20" fill="#1e293b" opacity="0.1" />
+  <rect x="200" y="540" width="280" height="40" rx="20" fill="#1e293b" opacity="0.1" />
+
+  <rect x="620" y="240" width="320" height="360" rx="44" fill="#f8fafc" />
+  <circle cx="780" cy="380" r="96" fill="#c7d2fe" />
+  <circle cx="780" cy="360" r="48" fill="#1f2937" />
+  <path d="M760 428C760 412.431 772.431 400 788 400H772C787.569 400 800 412.431 800 428V452C800 467.569 787.569 480 772 480H788C772.431 480 760 467.569 760 452V428Z" fill="#0f172a" />
+
+  <rect x="620" y="620" width="320" height="80" rx="28" fill="#dbeafe" />
+  <rect x="670" y="720" width="220" height="24" rx="12" fill="#c7d2fe" />
+  <rect x="670" y="760" width="160" height="24" rx="12" fill="#c7d2fe" />
+  <rect x="670" y="800" width="180" height="24" rx="12" fill="#c7d2fe" />
+
+  <rect x="200" y="780" width="740" height="200" rx="34" fill="#eef2ff" />
+  <rect x="240" y="840" width="260" height="26" rx="13" fill="#c7d2fe" />
+  <rect x="240" y="880" width="520" height="26" rx="13" fill="#c7d2fe" />
+  <rect x="240" y="920" width="420" height="26" rx="13" fill="#c7d2fe" />
+  <rect x="240" y="960" width="200" height="26" rx="13" fill="#c7d2fe" />
+
+  <circle cx="332" cy="304" r="104" fill="#ffffff" />
+  <circle cx="332" cy="304" r="70" fill="#cbd5e1" />
+  <rect x="272" y="376" width="120" height="28" rx="14" fill="#1e293b" />
+  <rect x="284" y="414" width="92" height="16" rx="8" fill="#1e293b" opacity="0.6" />
+  <rect x="204" y="464" width="256" height="16" rx="8" fill="#1e293b" opacity="0.3" />
+</svg>

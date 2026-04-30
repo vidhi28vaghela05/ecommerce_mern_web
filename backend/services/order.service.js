@@ -1,95 +1,72 @@
-const orderModel = require("../models/order.model");
-const productModel = require("../models/product.model");
+const Order = require("../models/order.model");
+const Product = require("../models/product.model");
+const { getOrCreateCart, clearCart } = require("./cart.service");
 
+const createOrder = async (user, shippingAddress) => {
+  const cart = await getOrCreateCart(user._id);
+  if (!cart.items.length) {
+    throw new Error("Your cart is empty.");
+  }
 
-// create order
-module.exports.CreateOrder = async ({ userId, items }) => {
-  let totalAmount = 0;
-  let orderItems = [];
+  const items = [];
 
-  for (let item of items) {
-    const productId = item.productId;
-    const product = await productModel.findOne({ _id: productId });
-
-    if (!product) throw new Error("Product Not Found");
-    if (product.stock < item.quantity) {
-      throw new Error(`Insufficient stock for ${product.name}`);
+  for (const cartItem of cart.items) {
+    const product = await Product.findById(cartItem.product._id || cartItem.product);
+    if (!product || !product.isActive) {
+      throw new Error("One or more products are no longer available.");
     }
 
-    const itemsTotal = product.price * item.quantity;
-    totalAmount += itemsTotal;
+    if (product.stock < cartItem.quantity) {
+      throw new Error(`Insufficient stock for ${product.name}.`);
+    }
 
-    orderItems.push({
-      productId: product._id,
-      quantity: item.quantity,
-      price: product.price,
-      total: itemsTotal,
-    });
-
-    // Deduct stock
-    product.stock -= item.quantity;
+    product.stock -= cartItem.quantity;
     await product.save();
+
+    items.push({
+      product: product._id,
+      name: product.name,
+      image: product.images[0],
+      price: product.price,
+      quantity: cartItem.quantity,
+      lineTotal: product.price * cartItem.quantity,
+    });
   }
 
-  return await orderModel.create({
-    userId,
-    items: orderItems,
-    totalbill: totalAmount,
+  const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+  const shippingFee = subtotal > 1000 ? 0 : 99;
+  const totalAmount = subtotal + shippingFee;
+
+  const order = await Order.create({
+    user: user._id,
+    items,
+    shippingAddress,
+    paymentMethod: "Cash on Delivery",
+    subtotal,
+    shippingFee,
+    totalAmount,
   });
+
+  await clearCart(user._id);
+  return order;
 };
 
-// get order history or show order
-module.exports.GetOrder = async (userId) => {
-  return await orderModel
-    .findOne({ userId })
-    .sort({ createdAt: -1 });
-};
+const getUserOrders = (userId) =>
+  Order.find({ user: userId }).sort({ createdAt: -1 });
 
-// get all orders
-module.exports.GetAllOrders = async () => {
-  return await orderModel.find().sort({ createdAt: -1 });
-};
-
-// get single order by id
-module.exports.GetOrderById = async (orderId) => {
-  return await orderModel.findOne({ _id: orderId });
-};
-
-// update order status
-module.exports.UpdateOrderStatus = async (orderId, status) => {
-  return await orderModel.findOneAndUpdate(
-    { _id: orderId },
-    { status },
-    { new: true }
-  );
-};
-
-// update order payment
-module.exports.UpdateOrderPayment = async (orderId, paymentId, paymentStatus) => {
-  return await orderModel.findOneAndUpdate(
-    { _id: orderId },
-    { paymentId, paymentStatus },
-    { new: true }
-  );
-};
-
-// cancel order (refund stock)
-module.exports.CancelOrder = async (orderId) => {
-  const order = await orderModel.findOne({ _id: orderId });
-  if (!order) throw new Error("Order not found");
-  if (order.status !== "pending" && order.status !== "confirmed") {
-    throw new Error("Cannot cancel order that has been shipped or delivered");
+const updateOrderStatus = async (orderId, status) => {
+  const order = await Order.findById(orderId);
+  if (!order) {
+    throw new Error("Order not found.");
   }
 
-  // Restore stock
-  for (let item of order.items) {
-    const product = await productModel.findOne({ _id: item.productId });
-    if (product) {
-      product.stock += item.quantity;
-      await product.save();
-    }
-  }
+  order.status = status;
+  await order.save();
+  return order;
+};
 
-  order.status = "cancelled";
-  return await order.save();
+module.exports = {
+  createOrder,
+  getUserOrders,
+  updateOrderStatus,
 };

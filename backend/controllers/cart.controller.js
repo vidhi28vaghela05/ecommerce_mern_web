@@ -1,69 +1,52 @@
-const cartModel = require("../models/cart.model");
 const cartService = require("../services/cart.service");
 
-// Add To Cart
-module.exports.AddToCart = async (req, res) => {
+const getCart = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-    const { item } = req.body;
-
-    let Exist = await cartModel.findOne({ userId });
-
-    const cart = await cartService.addToCart({ userId, item });
-
-    return res
-      .status(200)
-      .json({ message: "Item added to cart successfully", cart });
+    const cart = await cartService.getOrCreateCart(req.user._id);
+    res.json(cartService.getCartSummary(cart));
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    next(error);
   }
 };
 
-// Get Cart
-module.exports.GetCart = async (req, res) => {
+const addItem = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-
-    let cart = await cartService.GetCart(userId);
-
-    if (!cart) {
-      return res.status(200).json({ message: "Cart is empty", cart: null });
-    }
-
-    return res.status(200).json({ message: "Cart fetched successfully", cart });
+    const cart = await cartService.addToCart(
+      req.user._id,
+      req.body.productId,
+      req.body.quantity
+    );
+    res.json({ message: "Item added to cart.", cart });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    next(error);
   }
 };
 
-// remove single item from cart
-module.exports.RemoveItem = async (req, res) => {
+const updateItem = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-    const productId = req.params.id;
-
-    await cartService.RemoveSingleProduct({ userId, productId });
-
-    return res.status(200).json({ message: "Item removed from cart successfully" });
+    const cart = await cartService.updateCartItem(
+      req.user._id,
+      req.params.productId,
+      req.body.quantity
+    );
+    res.json({ message: "Cart updated successfully.", cart });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    next(error);
   }
 };
 
-// update cart item quantity
-module.exports.UpdateQuantity = async (req, res) => {
+const removeItem = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-    const { productId } = req.params;
-    const { quantity } = req.body;
-
-    await cartService.UpdateQuantity({ userId, productId, quantity });
-
-    const cart = await cartService.GetCart(userId);
-    return res
-      .status(200)
-      .json({ message: "Quantity updated successfully", cart });
+    const cart = await cartService.removeCartItem(req.user._id, req.params.productId);
+    res.json({ message: "Item removed from cart.", cart });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    next(error);
   }
+};
+
+module.exports = {
+  getCart,
+  addItem,
+  updateItem,
+  removeItem,
 };

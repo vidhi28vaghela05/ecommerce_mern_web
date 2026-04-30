@@ -33,13 +33,22 @@ const getStaticReply = (message) => {
 
 // AI Chat Bot
 const getAiReply = async (message) => {
-  const ai = new GoogleGenAI(process.env.GEMINI_API_KEY);
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: message,
-  });
+  try {
+    const ai = new GoogleGenAI(process.env.GEMINI_API_KEY);
+    const response = await ai.models.generateContent({
+      model: "gemini-1.5-flash",
+      contents: [{ role: "user", parts: [{ text: message }] }],
+    });
 
-  return response.text;
+    return response.text;
+  } catch (error) {
+    console.error("Gemini API error:", error.message);
+    // Check if it's an image-related error
+    if (error.message && (error.message.includes("image") || error.message.includes("unsupported"))) {
+      return "I'm sorry, I can only process text messages. Please don't send images or files.";
+    }
+    throw error; // Re-throw other errors
+  }
 };
 
 module.exports.getReply = async (message) => {

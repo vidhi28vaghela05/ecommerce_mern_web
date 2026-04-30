@@ -1,13 +1,405 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <title>LuxeCart | Professional E-commerce Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#eef2ff",
+                500: "#6366f1",
+                600: "#4f46e5",
+                700: "#4338ca"
+              }
+            }
+          }
+        }
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
   </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+  <body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+    <div id="loading-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40">
+      <div class="glass-card rounded-3xl px-10 py-8 shadow-2xl">
+        <div class="loader-ring mx-auto"></div>
+        <p class="mt-4 text-sm font-medium text-slate-600 dark:text-slate-300">Loading experience...</p>
+      </div>
+    </div>
+
+    <div id="toast" class="toast-hide fixed bottom-6 right-6 z-50 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white shadow-2xl transition-all duration-300 dark:bg-white dark:text-slate-900"></div>
+
+    <header class="sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <a href="#" class="text-2xl font-extrabold tracking-tight text-brand-600 dark:text-brand-500">LuxeCart</a>
+        <nav class="hidden items-center gap-6 md:flex">
+          <button data-section-target="home" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Home</button>
+          <button data-section-target="shop" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Shop</button>
+          <button data-section-target="cart" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Cart</button>
+          <button data-section-target="orders" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Orders</button>
+          <button data-section-target="wishlist" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Wishlist</button>
+          <a href="/admin" id="admin-link" class="text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Admin</a>
+        </nav>
+        <div class="flex items-center gap-3">
+          <button id="theme-toggle" class="rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-500 hover:text-brand-600 dark:border-slate-700 dark:text-slate-200">Theme</button>
+          <button id="auth-trigger" class="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:bg-brand-700">Login</button>
+          <button id="logout-trigger" class="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-brand-500 hover:text-brand-600 dark:border-slate-700 dark:text-slate-200">Logout</button>
+          <button data-section-target="cart" class="nav-btn rounded-full bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">Cart <span id="cart-count">0</span></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section id="section-home" class="space-y-12">
+        <div id="hero-slider" class="relative h-[450px] w-full overflow-hidden rounded-[2rem] shadow-2xl sm:h-[550px]">
+          <!-- Slide 1 -->
+          <div class="hero-slide absolute inset-0 opacity-100 transition-all duration-1000 ease-in-out">
+            <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&q=80" class="h-full w-full object-cover" />
+            <div class="absolute inset-0 bg-slate-950/40"></div>
+            <div class="absolute inset-0 flex items-center px-8 sm:px-12">
+              <div class="max-w-xl text-white">
+                <span class="inline-flex rounded-full bg-brand-600 px-4 py-2 text-xs font-bold uppercase tracking-widest">New Collection 2026</span>
+                <h1 class="mt-6 text-4xl font-extrabold leading-tight sm:text-6xl">Elevate Your Everyday Lifestyle</h1>
+                <p class="mt-4 text-base text-slate-200 sm:text-lg">Discover our curated collection of premium essentials designed for modern living.</p>
+                <div class="mt-8 flex flex-wrap gap-4">
+                  <button data-section-target="shop" class="nav-btn rounded-full bg-white px-8 py-4 text-sm font-bold text-slate-950 transition hover:scale-105">Shop Collection</button>
+                  <button class="hero-auth-btn rounded-full border border-white/20 px-8 py-4 text-sm font-bold text-white transition hover:bg-white/10">Create Account</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Slide 2 -->
+          <div class="hero-slide absolute inset-0 opacity-0 transition-all duration-1000 ease-in-out">
+            <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1600&q=80" class="h-full w-full object-cover" />
+            <div class="absolute inset-0 bg-slate-950/40"></div>
+            <div class="absolute inset-0 flex items-center px-8 sm:px-12">
+              <div class="max-w-xl text-white">
+                <span class="inline-flex rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-widest">Tech Innovation</span>
+                <h1 class="mt-6 text-4xl font-extrabold leading-tight sm:text-6xl">Next-Gen Gadgets & Electronics</h1>
+                <p class="mt-4 text-base text-slate-200 sm:text-lg">Experience the future with our latest high-performance smart devices.</p>
+                <div class="mt-8 flex flex-wrap gap-4">
+                  <button data-section-target="shop" class="nav-btn rounded-full bg-white px-8 py-4 text-sm font-bold text-slate-950 transition hover:scale-105">View Gadgets</button>
+                  <button class="hero-auth-btn rounded-full border border-white/20 px-8 py-4 text-sm font-bold text-white transition hover:bg-white/10">Create Account</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Slide 3 -->
+          <div class="hero-slide absolute inset-0 opacity-0 transition-all duration-1000 ease-in-out">
+            <img src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=1600&q=80" class="h-full w-full object-cover" />
+            <div class="absolute inset-0 bg-slate-950/40"></div>
+            <div class="absolute inset-0 flex items-center px-8 sm:px-12">
+              <div class="max-w-xl text-white">
+                <span class="inline-flex rounded-full bg-rose-600 px-4 py-2 text-xs font-bold uppercase tracking-widest">Fashion Week</span>
+                <h1 class="mt-6 text-4xl font-extrabold leading-tight sm:text-6xl">Style That Defines You</h1>
+                <p class="mt-4 text-base text-slate-200 sm:text-lg">Express your unique personality with our trending and exclusive fashion pieces.</p>
+                <div class="mt-8 flex flex-wrap gap-4">
+                  <button data-section-target="shop" class="nav-btn rounded-full bg-white px-8 py-4 text-sm font-bold text-slate-950 transition hover:scale-105">Explore Fashion</button>
+                  <button class="hero-auth-btn rounded-full border border-white/20 px-8 py-4 text-sm font-bold text-white transition hover:bg-white/10">Create Account</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Slider Controls -->
+          <div class="absolute bottom-8 right-8 z-20 flex gap-3 sm:right-12">
+             <button id="hero-prev" class="group rounded-full bg-white/20 p-4 text-white backdrop-blur-md transition hover:bg-white/40">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition group-hover:-translate-x-1"><path d="m15 18-6-6 6-6"/></svg>
+             </button>
+             <button id="hero-next" class="group rounded-full bg-white/20 p-4 text-white backdrop-blur-md transition hover:bg-white/40">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition group-hover:translate-x-1"><path d="m9 18 6-6-6-6"/></svg>
+             </button>
+          </div>
+
+          <!-- Indicators -->
+          <div class="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2 gap-2" id="slider-indicators">
+            <div class="h-1.5 w-8 rounded-full bg-white transition-all duration-300"></div>
+            <div class="h-1.5 w-4 rounded-full bg-white/40 transition-all duration-300"></div>
+            <div class="h-1.5 w-4 rounded-full bg-white/40 transition-all duration-300"></div>
+          </div>
+        </div>
+
+        <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Browse by Category</p>
+          <div id="hero-categories" class="mt-4 flex flex-wrap gap-3"></div>
+        </div>
+
+        <div>
+          <div class="mb-6 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Featured Products</p>
+              <h2 class="mt-2 text-3xl font-bold">Trending now</h2>
+            </div>
+            <button data-section-target="shop" class="nav-btn rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">View all</button>
+          </div>
+          <div id="featured-grid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-4"></div>
+        </div>
+      </section>
+
+      <section id="section-shop" class="section-hidden space-y-8">
+        <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end">
+            <div class="flex-1">
+              <label class="mb-2 block text-sm font-semibold">Search Products</label>
+              <input id="search-input" type="text" placeholder="Search by name or description" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-brand-500 dark:border-slate-700 dark:bg-slate-950" />
+            </div>
+            <div class="w-full lg:w-56">
+              <label class="mb-2 block text-sm font-semibold">Category</label>
+              <select id="category-filter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-950"></select>
+            </div>
+            <div class="w-full lg:w-48">
+              <label class="mb-2 block text-sm font-semibold">Sort By</label>
+              <select id="sort-filter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-950">
+                <option value="">Newest</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="name-asc">Name: A to Z</option>
+              </select>
+            </div>
+            <button id="search-btn" class="rounded-2xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-700">Apply Filters</button>
+          </div>
+        </div>
+        <div id="products-grid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-4"></div>
+        <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+          <p id="pagination-label" class="text-sm text-slate-600 dark:text-slate-300">Page 1</p>
+          <div class="flex gap-3">
+            <button id="prev-page" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Previous</button>
+            <button id="next-page" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-profile" class="section-hidden mx-auto max-w-2xl">
+        <div class="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <h2 class="text-3xl font-bold">Your Profile</h2>
+          <form id="profile-form" class="mt-8 space-y-6">
+            <div class="grid gap-6 md:grid-cols-2">
+              <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
+                <input name="name" class="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" required />
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Email Address (Read-only)</label>
+                <input name="email" type="email" readonly class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-500 dark:border-slate-700 dark:bg-slate-900" />
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Phone</label>
+                <input name="phone" class="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" />
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">New Password (Optional)</label>
+                <input name="password" type="password" placeholder="Leave blank to keep current" class="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" />
+              </div>
+            </div>
+            <button type="submit" class="w-full rounded-full bg-brand-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-brand-600/30 transition hover:bg-brand-700">Update Profile</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="section-cart" class="section-hidden">
+        <div class="grid gap-8 lg:grid-cols-[1.5fr_0.8fr]">
+          <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="mb-6 flex items-center justify-between">
+              <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Your Cart</p>
+                <h2 class="mt-2 text-3xl font-bold">Ready to checkout</h2>
+              </div>
+            </div>
+            <div id="cart-items" class="space-y-4"></div>
+          </div>
+          <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="text-xl font-bold">Order Summary</h3>
+            <div class="mt-6 space-y-3 text-sm">
+              <div class="flex items-center justify-between"><span>Items</span><span id="summary-items">0</span></div>
+              <div class="flex items-center justify-between"><span>Subtotal</span><span id="summary-subtotal">$0.00</span></div>
+              <div class="flex items-center justify-between"><span>Shipping</span><span id="summary-shipping">Calculated at checkout</span></div>
+            </div>
+            <button data-section-target="checkout" class="nav-btn mt-8 w-full rounded-2xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white hover:bg-brand-700">Proceed to Checkout</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-checkout" class="section-hidden">
+        <div class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <form id="checkout-form" class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Checkout</p>
+            <h2 class="mt-2 text-3xl font-bold">Shipping information</h2>
+            <div class="mt-6 grid gap-4 md:grid-cols-2">
+              <input name="fullName" placeholder="Full name" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+              <input name="email" placeholder="Email" type="email" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+              <input name="phone" placeholder="Phone" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+              <input name="city" placeholder="City" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+              <input name="state" placeholder="State" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+              <input name="postalCode" placeholder="Postal code" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+              <input name="country" placeholder="Country" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+              <input name="line1" placeholder="Street address" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950 md:col-span-2" required />
+            </div>
+            <div class="mt-8">
+              <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Payment Method</p>
+              <div class="mt-4 grid gap-4 md:grid-cols-2">
+                <label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 p-4 transition hover:border-brand-500 dark:border-slate-700">
+                  <input type="radio" name="paymentMethod" value="cod" checked class="h-4 w-4 text-brand-600" />
+                  <span class="text-sm font-semibold">Cash on Delivery</span>
+                </label>
+                <label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 p-4 transition hover:border-brand-500 dark:border-slate-700">
+                  <input type="radio" name="paymentMethod" value="stripe" class="h-4 w-4 text-brand-600" />
+                  <span class="text-sm font-semibold">Credit Card (Stripe)</span>
+                </label>
+              </div>
+            </div>
+            <button class="mt-8 rounded-2xl bg-slate-900 px-6 py-4 text-sm font-bold text-white shadow-lg transition-all hover:bg-slate-800 dark:bg-white dark:text-slate-900">Confirm Order</button>
+          </form>
+          <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="text-xl font-bold">Checkout Summary</h3>
+            <div id="checkout-summary" class="mt-6 space-y-4"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-orders" class="section-hidden">
+        <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div class="mb-6 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Order History</p>
+              <h2 class="mt-2 text-3xl font-bold">Track your purchases</h2>
+            </div>
+          </div>
+          <div id="orders-list" class="space-y-5"></div>
+        </div>
+      </section>
+
+      <section id="section-wishlist" class="section-hidden">
+        <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div class="mb-6 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Saved Items</p>
+              <h2 class="mt-2 text-3xl font-bold">Your Wishlist</h2>
+            </div>
+          </div>
+          <div id="wishlist-grid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-4"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="mt-20 border-t border-slate-200 bg-white pt-16 pb-8 dark:border-slate-800 dark:bg-slate-950">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="grid gap-12 lg:grid-cols-4">
+          <div class="space-y-6">
+            <h2 class="text-2xl font-bold italic tracking-tighter">Luxe<span class="text-brand-600">Cart</span></h2>
+            <p class="text-sm leading-relaxed text-slate-500 dark:text-slate-400">Experience premium shopping with curated collections and seamless checkout. Your one-stop destination for style and tech.</p>
+            <div class="flex gap-4">
+              <a href="#" class="rounded-full bg-slate-100 p-2 text-slate-600 transition hover:bg-brand-600 hover:text-white dark:bg-slate-800 dark:text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+              </a>
+              <a href="#" class="rounded-full bg-slate-100 p-2 text-slate-600 transition hover:bg-brand-600 hover:text-white dark:bg-slate-800 dark:text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+              </a>
+              <a href="#" class="rounded-full bg-slate-100 p-2 text-slate-600 transition hover:bg-brand-600 hover:text-white dark:bg-slate-800 dark:text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+              </a>
+            </div>
+          </div>
+          
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Shop</h3>
+            <ul class="mt-6 space-y-4 text-sm text-slate-500 dark:text-slate-400">
+              <li><button data-section-target="shop" class="nav-btn transition hover:text-brand-600">New Arrivals</button></li>
+              <li><button data-section-target="shop" class="nav-btn transition hover:text-brand-600">Featured</button></li>
+              <li><button data-section-target="shop" class="nav-btn transition hover:text-brand-600">Best Sellers</button></li>
+              <li><button data-section-target="shop" class="nav-btn transition hover:text-brand-600">Offers</button></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Support</h3>
+            <ul class="mt-6 space-y-4 text-sm text-slate-500 dark:text-slate-400">
+              <li><a href="#" class="transition hover:text-brand-600">Contact Us</a></li>
+              <li><a href="#" class="transition hover:text-brand-600">FAQs</a></li>
+              <li><a href="#" class="transition hover:text-brand-600">Shipping Policy</a></li>
+              <li><a href="#" class="transition hover:text-brand-600">Privacy Policy</a></li>
+            </ul>
+          </div>
+          
+          <div class="space-y-6">
+            <h3 class="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Newsletter</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Subscribe to get special offers and new collections.</p>
+            <form class="flex gap-2">
+              <input type="email" placeholder="Email address" class="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm focus:border-brand-600 focus:outline-none dark:border-slate-800 dark:bg-slate-900" />
+              <button type="button" class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Join</button>
+            </form>
+          </div>
+        </div>
+        
+        <div class="mt-16 border-t border-slate-200 pt-8 dark:border-slate-800">
+          <p class="text-center text-xs text-slate-500 dark:text-slate-400">© 2026 LuxeCart. All rights reserved. Built for excellence.</p>
+        </div>
+      </div>
+    </footer>
+
+    <div id="auth-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 p-4">
+      <div class="w-full max-w-lg rounded-[2rem] bg-white p-8 shadow-2xl dark:bg-slate-900">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Account</p>
+            <h3 id="auth-title" class="mt-2 text-2xl font-bold">Welcome back</h3>
+          </div>
+          <button id="auth-close" class="rounded-full border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">Close</button>
+        </div>
+        <div class="mt-6 flex gap-3">
+          <button id="login-tab" class="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white">Login</button>
+          <button id="register-tab" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Register</button>
+        </div>
+        <form id="auth-form" class="mt-6 space-y-4">
+          <div id="name-field" class="hidden">
+            <label class="mb-2 block text-sm font-semibold">Full Name</label>
+            <input name="name" class="w-full rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+          </div>
+          <div id="phone-field" class="hidden">
+            <label class="mb-2 block text-sm font-semibold">Phone</label>
+            <input name="phone" class="w-full rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold">Email</label>
+            <input name="email" type="email" required class="w-full rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold">Password</label>
+            <input name="password" type="password" required class="w-full rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+          </div>
+          <button class="w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="product-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 p-4">
+      <div class="w-full max-w-3xl rounded-[2rem] bg-white p-6 shadow-2xl dark:bg-slate-900">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Product Preview</p>
+            <h3 id="modal-product-name" class="mt-2 text-2xl font-bold"></h3>
+          </div>
+          <button id="product-close" class="rounded-full border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">Close</button>
+        </div>
+        <div class="mt-6 grid gap-6 md:grid-cols-[1fr_1.1fr]">
+          <img id="modal-product-image" src="" alt="" class="h-72 w-full rounded-3xl object-cover" />
+          <div>
+            <p id="modal-product-category" class="text-sm font-semibold text-brand-600"></p>
+            <p id="modal-product-description" class="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300"></p>
+            <p id="modal-product-price" class="mt-6 text-3xl font-bold"></p>
+            <button id="modal-add-cart" class="mt-6 rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-700">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/assets/js/app.js"></script>
   </body>
 </html>

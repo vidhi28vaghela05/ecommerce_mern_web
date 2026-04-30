@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LuxeCart Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#eef2ff",
+                500: "#6366f1",
+                600: "#4f46e5",
+                700: "#4338ca",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+  </head>
+  <body class="bg-slate-100 font-[Inter] text-slate-900 dark:bg-slate-950 dark:text-white">
+    <div class="min-h-screen">
+      <div class="border-b border-slate-200 bg-white/80 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Admin Panel</p>
+            <h1 class="mt-1 text-2xl font-extrabold">LuxeCart Dashboard</h1>
+          </div>
+          <div class="flex items-center gap-3">
+            <a href="/" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Storefront</a>
+            <button id="admin-logout" class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <section id="admin-login-section" class="mx-auto max-w-md rounded-[2rem] bg-white p-8 shadow-xl dark:bg-slate-900">
+          <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Secure Login</p>
+          <h2 class="mt-2 text-3xl font-bold">Admin access</h2>
+          <form id="admin-login-form" class="mt-6 space-y-4">
+            <input name="email" type="email" placeholder="Admin email" class="w-full rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+            <input name="password" type="password" placeholder="Password" class="w-full rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+            <button class="w-full rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white">Login to Dashboard</button>
+          </form>
+        </section>
+
+        <section id="admin-app" class="hidden space-y-8">
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" id="stats-grid"></div>
+
+          <div class="flex flex-wrap gap-3">
+            <button data-admin-tab="products" class="admin-tab rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white">Products</button>
+            <button data-admin-tab="categories" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Categories</button>
+            <button data-admin-tab="orders" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Orders</button>
+            <button data-admin-tab="users" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Users</button>
+          </div>
+
+          <section id="tab-products" class="admin-panel grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+            <form id="product-form" class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold">Product Form</h3>
+                <button id="product-reset" type="button" class="text-sm font-semibold text-brand-600">Reset</button>
+              </div>
+              <input type="hidden" name="productId" />
+              <div class="mt-5 grid gap-4">
+                <input name="name" placeholder="Product name" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+                <textarea name="description" placeholder="Description" rows="4" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required></textarea>
+                <div class="grid gap-4 md:grid-cols-2">
+                  <input name="price" type="number" step="0.01" placeholder="Price" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+                  <input name="compareAtPrice" type="number" step="0.01" placeholder="Compare at price" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+                  <input name="stock" type="number" placeholder="Stock" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+                  <input name="sku" placeholder="SKU" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+                  <input name="brand" placeholder="Brand" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+                  <select name="category" id="product-category-select" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required></select>
+                </div>
+                <label class="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold dark:border-slate-700">
+                  <input type="checkbox" name="featured" class="h-4 w-4" />
+                  Mark as featured
+                </label>
+                <input name="images" type="file" multiple accept="image/*" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+                <input name="imageUrls" placeholder="Optional image URLs separated by commas" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+                <button class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Save Product</button>
+              </div>
+            </form>
+            <div class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
+              <h3 class="text-xl font-bold">Product Inventory</h3>
+              <div id="admin-products-list" class="mt-5 space-y-4"></div>
+            </div>
+          </section>
+
+          <section id="tab-categories" class="admin-panel hidden grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+            <form id="category-form" class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold">Category Form</h3>
+                <button id="category-reset" type="button" class="text-sm font-semibold text-brand-600">Reset</button>
+              </div>
+              <input type="hidden" name="categoryId" />
+              <div class="mt-5 grid gap-4">
+                <input name="name" placeholder="Category name" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+                <textarea name="description" rows="4" placeholder="Description" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950"></textarea>
+                <input name="image" placeholder="Image URL" class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+                <button class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Save Category</button>
+              </div>
+            </form>
+            <div class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
+              <h3 class="text-xl font-bold">Category Library</h3>
+              <div id="admin-categories-list" class="mt-5 space-y-4"></div>
+            </div>
+          </section>
+
+          <section id="tab-orders" class="admin-panel hidden rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
+            <h3 class="text-xl font-bold">Order Management</h3>
+            <div id="admin-orders-list" class="mt-5 space-y-4"></div>
+          </section>
+
+          <section id="tab-users" class="admin-panel hidden rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
+            <h3 class="text-xl font-bold">User Management</h3>
+            <div id="admin-users-list" class="mt-5 space-y-4"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/assets/js/admin.js"></script>
+  </body>
+</html>

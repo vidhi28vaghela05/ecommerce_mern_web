@@ -1,53 +1,95 @@
-const userModel = require("../models/user.model");
 const adminService = require("../services/admin.service");
-const { validationResult } = require("express-validator");
+const orderService = require("../services/order.service");
 
-// get all user
-module.exports.AllUser = async (req, res) => {
+const dashboard = async (_req, res, next) => {
   try {
-    const users = await adminService.getAllUser();
-
-    return res.status(200).json({ message: "User Fetch Sucessfully", users });
+    const stats = await adminService.getDashboardStats();
+    res.json({ stats });
   } catch (error) {
-    return res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
-// delete user
-module.exports.deleteUser = async (req, res) => {
+const listUsers = async (_req, res, next) => {
   try {
-    const user = await adminService.deleteUser(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not Find" });
-    }
-
-    return res.status(200).json({ message: "User Delete Successfully" });
+    const users = await adminService.getAllUsers();
+    res.json({ users });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    next(error);
   }
 };
 
-// update user role
-module.exports.updateUserRole = async (req, res) => {
+const removeUser = async (req, res, next) => {
   try {
-    const userId = req.params.id;
-    const { role } = req.body;
-
-    if (req.user.role !== "admin") {
-      return res.status(401).json({ message: "Access Denined !!" });
-    }
-
-    const user = await adminService.updateUserRole({ userId, role });
-
-    if (!user) {
-      throw new Error("User Not Found !!");
-    }
-
-    return res
-      .status(200)
-      .json({ message: "User Role Updated Successfully", user });
+    await adminService.deleteUser(req.params.id);
+    res.json({ message: "User deleted successfully." });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    next(error);
   }
+};
+
+const listOrders = async (_req, res, next) => {
+  try {
+    const orders = await adminService.getAllOrders();
+    res.json({ orders });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateOrderStatus = async (req, res, next) => {
+  try {
+    const order = await orderService.updateOrderStatus(req.params.id, req.body.status);
+    res.json({ message: "Order status updated.", order });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const listCategories = async (_req, res, next) => {
+  try {
+    const categories = await adminService.getCategories();
+    res.json({ categories });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const createCategory = async (req, res, next) => {
+  try {
+    const category = await adminService.createCategory(req.body);
+    res.status(201).json({ message: "Category created successfully.", category });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateCategory = async (req, res, next) => {
+  try {
+    const category = await adminService.updateCategory(req.params.id, req.body);
+    res.json({ message: "Category updated successfully.", category });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteCategory = async (req, res, next) => {
+  try {
+    await adminService.deleteCategory(req.params.id);
+    res.json({ message: "Category deleted successfully." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  dashboard,
+  listUsers,
+  removeUser,
+  listOrders,
+  updateOrderStatus,
+  listCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 };

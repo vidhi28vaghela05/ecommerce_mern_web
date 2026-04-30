@@ -1,23 +1,11 @@
 const mongoose = require("mongoose");
-// const dbgr = require("debug")("development:server");
-// const config = require("config");
 
-function connetToDB() {
-  mongoose
-    .connect(process.env.MONGO_URL)
-    .then(() => {
-      console.log("📊 Mongodb Conected");
-    })
-    .catch((err) => console.log(err));
-}
+const connectToDb = async () => {
+  const mongoUri =
+    process.env.MONGO_URL || "mongodb://127.0.0.1:27017/ecommerce_pro";
 
-// function connetToDB() {
-//   mongoose
-//     .connect(`${config.get("MongoDB_URL")}/ecomerce`)
-//     .then(() => {
-//       dbgr("Mongodb Conected");
-//     })
-//     .catch((err) => dbgr(err));
-// }
+  await mongoose.connect(mongoUri);
+  console.log(`MongoDB connected: ${mongoose.connection.host}`);
+};
 
-module.exports = connetToDB;
+module.exports = connectToDb;

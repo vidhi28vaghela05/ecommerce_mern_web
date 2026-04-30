@@ -1,59 +1,102 @@
-const cartModel = require("../models/cart.model");
+const Cart = require("../models/cart.model");
+const Product = require("../models/product.model");
 
-// add item to cart
-module.exports.addToCart = async ({ userId, item }) => {
-  let cart = await cartModel.findOne({ userId });
+const populateCart = (query) =>
+  query.populate({
+    path: "items.product",
+    model: "product",
+  });
 
-  if (!cart) cart = new cartModel({ userId, items: [] });
+const getOrCreateCart = async (userId) => {
+  let cart = await populateCart(Cart.findOne({ user: userId }));
+  if (!cart) {
+    cart = await Cart.create({ user: userId, items: [] });
+    cart = await populateCart(Cart.findById(cart._id));
+  }
+  return cart;
+};
 
-  // Check if product already exists in cart
-  const existIndex = cart.items.findIndex((i) =>
-    i.productId.equals(item.productId)
-  );
+const getCartSummary = (cart) => {
+  const items = cart.items
+    .filter((item) => item.product)
+    .map((item) => ({
+      _id: item.product._id,
+      name: item.product.name,
+      price: item.product.price,
+      image: item.product.images[0],
+      stock: item.product.stock,
+      quantity: item.quantity,
+      lineTotal: item.product.price * item.quantity,
+    }));
 
-  if (existIndex > -1) {
-    // Update quantity
-    cart.items[existIndex].quantity += item.quantity || 1;
+  const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+
+  return {
+    items,
+    subtotal,
+    itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+  };
+};
+
+const addToCart = async (userId, productId, quantity = 1) => {
+  const product = await Product.findById(productId);
+  if (!product || !product.isActive) {
+    throw new Error("Product is not available.");
+  }
+
+  const cart = await getOrCreateCart(userId);
+  const qty = Math.max(Number(quantity) || 1, 1);
+  const existingItem = cart.items.find((item) => item.product && item.product._id.toString() === productId);
+
+  if (existingItem) {
+    existingItem.quantity += qty;
   } else {
-    cart.items.push({ productId: item.productId, quantity: item.quantity || 1 });
+    cart.items.push({ product: productId, quantity: qty });
   }
 
-  return await cart.save();
+  await cart.save();
+  const updated = await getOrCreateCart(userId);
+  return getCartSummary(updated);
 };
 
-// get Cart
-module.exports.GetCart = async (userId) => {
-  return await cartModel
-    .findOne({ userId })
-    .populate("items.productId", "name price discount images stock");
-};
-
-// delete single product from cart
-module.exports.RemoveSingleProduct = async ({ userId, productId }) => {
-  // find login user cart
-  let cart = await cartModel.findOne({ userId });
-
-  if (!cart) throw new Error("Cart Not Found !!");
-
-  // find index number of product based on productId
-  const itemIndex = cart.items.findIndex((i) => i.productId.equals(productId));
-
-  if (itemIndex < 0) {
-    throw new Error("Item not Found in Cart");
+const updateCartItem = async (userId, productId, quantity) => {
+  const cart = await Cart.findOne({ user: userId });
+  if (!cart) {
+    throw new Error("Cart not found.");
   }
 
-  cart.items.splice(itemIndex, 1);
+  const item = cart.items.find((entry) => entry.product.toString() === productId);
+  if (!item) {
+    throw new Error("Cart item not found.");
+  }
+
+  item.quantity = Math.max(Number(quantity) || 1, 1);
   await cart.save();
+  const updated = await getOrCreateCart(userId);
+  return getCartSummary(updated);
 };
 
-// update cart item quantity
-module.exports.UpdateQuantity = async ({ userId, productId, quantity }) => {
-  const cart = await cartModel.findOne({ userId });
-  if (!cart) throw new Error("Cart Not Found !!");
+const removeCartItem = async (userId, productId) => {
+  const cart = await Cart.findOne({ user: userId });
+  if (!cart) {
+    throw new Error("Cart not found.");
+  }
 
-  const item = cart.items.find((i) => i.productId.equals(productId));
-  if (!item) throw new Error("Item not Found in Cart");
-
-  item.quantity = quantity;
+  cart.items = cart.items.filter((item) => item.product.toString() !== productId);
   await cart.save();
+  const updated = await getOrCreateCart(userId);
+  return getCartSummary(updated);
+};
+
+const clearCart = async (userId) => {
+  await Cart.findOneAndUpdate({ user: userId }, { items: [] }, { new: true, upsert: true });
+};
+
+module.exports = {
+  getOrCreateCart,
+  getCartSummary,
+  addToCart,
+  updateCartItem,
+  removeCartItem,
+  clearCart,
 };

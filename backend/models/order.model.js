@@ -1,27 +1,65 @@
 const mongoose = require("mongoose");
 
-let OrderSchema = mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "user",
+const orderSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
+    },
+    items: [
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "product",
+          required: true,
+        },
+        name: String,
+        image: String,
+        price: Number,
+        quantity: Number,
+        lineTotal: Number,
+      },
+    ],
+    shippingAddress: {
+      fullName: String,
+      email: String,
+      phone: String,
+      line1: String,
+      city: String,
+      state: String,
+      postalCode: String,
+      country: String,
+    },
+    paymentMethod: {
+      type: String,
+      default: "Cash on Delivery",
+    },
+    subtotal: {
+      type: Number,
+      required: true,
+    },
+    shippingFee: {
+      type: Number,
+      default: 0,
+    },
+    totalAmount: {
+      type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "shipped", "delivered", "canceled"],
+      default: "pending",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
+    stripeSessionId: String,
   },
-  items: [
-    { productId: String, quantity: Number, price: Number, total: Number },
-  ],
-  totalbill: {
-    type: Number,
-  },
-  status: {
-    type: String,
-    enum: ["pending", "confirmed", "shipped", "delivered", "cancelled"],
-    default: "pending",
-  },
-  paymentId: {
-    type: String,
-  },
-  paymentStatus: {
-    type: String,
-    enum: ["pending", "paid", "failed"],
-    default: "pending",
-  },
-}, { timestamps: true });
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("order", orderSchema);
