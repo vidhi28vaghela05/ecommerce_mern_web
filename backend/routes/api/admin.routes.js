@@ -14,6 +14,7 @@ router.get("/users", adminController.listUsers);
 router.delete("/users/:id", adminController.removeUser);
 router.get("/orders", adminController.listOrders);
 router.patch("/orders/:id/status", adminController.updateOrderStatus);
+router.patch("/orders/:id/payment-status", adminController.updatePaymentStatus);
 router.get("/categories", adminController.listCategories);
 router.post("/categories", adminController.createCategory);
 router.put("/categories/:id", adminController.updateCategory);

@@ -46,6 +46,15 @@ const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+const updatePaymentStatus = async (req, res, next) => {
+  try {
+    const order = await orderService.updatePaymentStatus(req.params.id, req.body.paymentStatus);
+    res.json({ message: "Payment status updated.", order });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const listCategories = async (_req, res, next) => {
   try {
     const categories = await adminService.getCategories();
@@ -88,6 +97,7 @@ module.exports = {
   removeUser,
   listOrders,
   updateOrderStatus,
+  updatePaymentStatus,
   listCategories,
   createCategory,
   updateCategory,

@@ -40,6 +40,12 @@
     <header class="sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <a href="#" class="text-2xl font-extrabold tracking-tight text-brand-600 dark:text-brand-500">LuxeCart</a>
+        
+        <div class="relative hidden max-w-sm flex-1 lg:block mx-10">
+          <input id="nav-search-input" type="text" placeholder="Search for collections, products..." class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-11 py-2.5 text-sm transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 dark:border-slate-800 dark:bg-slate-900" />
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+
         <nav class="hidden items-center gap-6 md:flex">
           <button data-section-target="home" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Home</button>
           <button data-section-target="shop" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Shop</button>
@@ -287,6 +293,39 @@
           <div id="wishlist-grid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-4"></div>
         </div>
       </section>
+
+      <section id="section-profile" class="section-hidden">
+        <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div class="mb-6 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Personal Account</p>
+              <h2 class="mt-2 text-3xl font-bold">Your Profile</h2>
+            </div>
+          </div>
+          <form id="profile-form" class="mt-8 max-w-xl space-y-6">
+            <div class="grid gap-6 md:grid-cols-2">
+              <div>
+                <label class="mb-2 block text-sm font-semibold">Full Name</label>
+                <input name="name" class="w-full rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" required />
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-semibold">Phone</label>
+                <input name="phone" class="w-full rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+              </div>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-semibold">Email Address</label>
+              <input name="email" type="email" readonly class="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/50" />
+              <p class="mt-1 text-xs text-slate-400">Email cannot be changed.</p>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-semibold">New Password (leave blank to keep current)</label>
+              <input name="password" type="password" class="w-full rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
+            </div>
+            <button class="rounded-2xl bg-brand-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition-all hover:bg-brand-700">Update Profile</button>
+          </form>
+        </div>
+      </section>
     </main>
 
     <footer class="mt-20 border-t border-slate-200 bg-white pt-16 pb-8 dark:border-slate-800 dark:bg-slate-950">
@@ -394,11 +433,18 @@
             <p id="modal-product-category" class="text-sm font-semibold text-brand-600"></p>
             <p id="modal-product-description" class="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300"></p>
             <p id="modal-product-price" class="mt-6 text-3xl font-bold"></p>
-            <button id="modal-add-cart" class="mt-6 rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-700">Add to Cart</button>
+            <div class="mt-6 flex gap-2">
+              <button id="modal-add-cart" class="flex-1 rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-700">Add to Cart</button>
+              <button id="modal-wishlist" class="flex-1 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold transition hover:bg-rose-50 dark:border-slate-700 dark:hover:bg-rose-950/20">Wishlist</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <button id="scroll-top" class="fixed bottom-8 left-8 z-50 flex h-12 w-12 translate-y-20 items-center justify-center rounded-full bg-white text-slate-900 shadow-2xl transition-all duration-500 hover:bg-brand-600 hover:text-white dark:bg-slate-800 dark:text-white">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+    </button>
 
     <script type="module" src="/assets/js/app.js"></script>
   </body>

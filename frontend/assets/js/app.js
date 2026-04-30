@@ -65,6 +65,9 @@ const els = {
   modalDescription: document.getElementById("modal-product-description"),
   modalPrice: document.getElementById("modal-product-price"),
   modalAddCart: document.getElementById("modal-add-cart"),
+  modalWishlist: document.getElementById("modal-wishlist"),
+  scrollTop: document.getElementById("scroll-top"),
+  navSearchInput: document.getElementById("nav-search-input"),
 };
 
 const money = (value) =>
@@ -162,7 +165,8 @@ const renderCategoryOptions = () => {
 };
 
 const productCard = (product) => {
-  const isInWishlist = state.wishlist.some(id => id === product._id);
+  if (!product || !product._id) return "";
+  const isInWishlist = state.wishlist.includes(product._id.toString());
   return `
   <article class="product-card group relative rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
     <div class="overflow-hidden rounded-[1.5rem]">
@@ -216,8 +220,10 @@ const loadWishlist = async () => {
   if (!state.user) return;
   try {
     const res = await wishlistApi.get();
-    state.wishlist = res.wishlist ? res.wishlist.productIds.map(p => p._id || p) : [];
-    renderWishlist(res.wishlist ? res.wishlist.productIds : []);
+    state.wishlist = res.wishlist ? res.wishlist.productIds.filter(p => p).map(p => (p._id || p).toString()) : [];
+    renderWishlist(res.wishlist ? res.wishlist.productIds.filter(p => p) : []);
+    renderFeatured();
+    renderProducts();
   } catch (error) {
     console.error("Wishlist load error:", error);
   }
@@ -252,6 +258,9 @@ const handleWishlistToggle = async (productId) => {
     renderFeatured();
     renderProducts();
     renderCart();
+    if (state.selectedProduct && state.selectedProduct._id === productId) {
+      updateModalWishlistBtn();
+    }
     await loadWishlist();
   } catch (error) {
     showToast(error.message, true);
@@ -283,8 +292,8 @@ const renderCart = () => {
               <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">${money(item.price)} each</p>
             </div>
             <div class="flex items-center gap-3">
-              <button class="wishlist-toggle rounded-xl border border-slate-200 px-3 py-2 transition hover:bg-rose-50 dark:border-slate-700 dark:hover:bg-rose-950/20 ${state.wishlist.includes(item.product._id || item.product) ? 'bg-rose-500 text-white border-rose-500' : ''}" data-id="${item.product._id || item.product}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${state.wishlist.includes(item.product._id || item.product) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${state.wishlist.includes(item.product._id || item.product) ? 'text-white' : 'text-rose-500'}"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              <button class="wishlist-toggle rounded-xl border border-slate-200 px-3 py-2 transition hover:bg-rose-50 dark:border-slate-700 dark:hover:bg-rose-950/20 ${item.product && state.wishlist.includes((item.product._id || item.product).toString()) ? 'bg-rose-500 text-white border-rose-500' : ''}" data-id="${item.product ? (item.product._id || item.product) : ''}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${item.product && state.wishlist.includes((item.product._id || item.product).toString()) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${item.product && state.wishlist.includes((item.product._id || item.product).toString()) ? 'text-white' : 'text-rose-500'}"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
               </button>
               <input type="number" min="1" value="${item.quantity}" data-qty="${item._id}" class="cart-qty w-20 rounded-xl border border-slate-200 px-3 py-2 text-center dark:border-slate-700 dark:bg-slate-950" />
               <button class="remove-cart rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600" data-id="${item._id}">Remove</button>
@@ -519,6 +528,7 @@ const openProductModal = async (productId) => {
     els.modalCategory.textContent = state.selectedProduct.categoryName || state.selectedProduct.category?.name || "";
     els.modalDescription.textContent = state.selectedProduct.description;
     els.modalPrice.textContent = money(state.selectedProduct.price);
+    updateModalWishlistBtn();
     els.productModal.classList.remove("hidden");
     els.productModal.classList.add("flex");
   } catch (error) {
@@ -526,6 +536,15 @@ const openProductModal = async (productId) => {
   } finally {
     setLoading(false);
   }
+};
+
+const updateModalWishlistBtn = () => {
+  if (!els.modalWishlist || !state.selectedProduct) return;
+  const isInWishlist = state.wishlist.includes(state.selectedProduct._id);
+  els.modalWishlist.textContent = isInWishlist ? "Remove Favorite" : "Add Favorite";
+  els.modalWishlist.classList.toggle("bg-rose-500", isInWishlist);
+  els.modalWishlist.classList.toggle("text-white", isInWishlist);
+  els.modalWishlist.classList.toggle("border-rose-500", isInWishlist);
 };
 
 const initHeroSlider = () => {
@@ -643,6 +662,38 @@ const bindEvents = () => {
     } finally {
       setLoading(false);
     }
+  });
+
+  let searchTimeout;
+  els.searchInput.addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+      state.currentPage = 1;
+      state.filters.search = els.searchInput.value.trim();
+      try {
+        await loadProducts();
+      } catch (e) {}
+    }, 600);
+  });
+
+  let navSearchTimeout;
+  els.navSearchInput.addEventListener("input", () => {
+    clearTimeout(navSearchTimeout);
+    navSearchTimeout = setTimeout(async () => {
+      const val = els.navSearchInput.value.trim();
+      if (!val) return;
+      
+      if (document.getElementById("section-shop").classList.contains("section-hidden")) {
+        switchSection("shop");
+      }
+      
+      els.searchInput.value = val;
+      state.currentPage = 1;
+      state.filters.search = val;
+      try {
+        await loadProducts();
+      } catch (e) {}
+    }, 600);
   });
 
   els.prevPage.addEventListener("click", async () => {
@@ -776,6 +827,23 @@ const bindEvents = () => {
       handleAddToCart(state.selectedProduct._id);
     }
   });
+
+  els.modalWishlist.addEventListener("click", () => {
+    if (state.selectedProduct) {
+      handleWishlistToggle(state.selectedProduct._id);
+    }
+  });
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 400) {
+      els.scrollTop.classList.remove("translate-y-20");
+    } else {
+      els.scrollTop.classList.add("translate-y-20");
+    }
+  });
+
+  els.scrollTop.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 };
 
 const init = async () => {
@@ -801,11 +869,10 @@ const init = async () => {
     }
 
     await loadCatalog();
+    await loadWishlist();
     await loadProducts();
     await loadCart();
     await loadOrders();
-    await loadWishlist();
-    renderOrders();
     initHeroSlider();
 
     // Handle hash routing

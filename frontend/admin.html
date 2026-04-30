@@ -55,16 +55,30 @@
         </section>
 
         <section id="admin-app" class="hidden space-y-8">
-          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" id="stats-grid"></div>
-
           <div class="flex flex-wrap gap-3">
-            <button data-admin-tab="products" class="admin-tab rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white">Products</button>
+            <button data-admin-tab="overview" class="admin-tab rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white">Overview</button>
+            <button data-admin-tab="products" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Products</button>
             <button data-admin-tab="categories" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Categories</button>
             <button data-admin-tab="orders" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Orders</button>
+            <button data-admin-tab="payments" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Payments</button>
             <button data-admin-tab="users" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Users</button>
           </div>
 
-          <section id="tab-products" class="admin-panel grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <section id="tab-overview" class="admin-panel space-y-8">
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" id="stats-grid"></div>
+            <div class="grid gap-8 lg:grid-cols-2">
+              <div class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
+                <h3 class="text-xl font-bold">Recent Orders</h3>
+                <div id="admin-recent-orders" class="mt-5 space-y-4"></div>
+              </div>
+              <div class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
+                <h3 class="text-xl font-bold">New Users</h3>
+                <div id="admin-recent-users" class="mt-5 space-y-4"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-products" class="admin-panel hidden grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
             <form id="product-form" class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
               <div class="flex items-center justify-between">
                 <h3 class="text-xl font-bold">Product Form</h3>
@@ -122,9 +136,18 @@
             <div id="admin-orders-list" class="mt-5 space-y-4"></div>
           </section>
 
-          <section id="tab-users" class="admin-panel hidden rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
-            <h3 class="text-xl font-bold">User Management</h3>
-            <div id="admin-users-list" class="mt-5 space-y-4"></div>
+          <section id="tab-users" class="admin-panel hidden">
+            <div class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
+              <h3 class="text-xl font-bold">User Management</h3>
+              <div id="admin-users-list" class="mt-5 space-y-4"></div>
+            </div>
+          </section>
+
+          <section id="tab-payments" class="admin-panel hidden">
+            <div class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">
+              <h3 class="text-xl font-bold">Payment Transactions</h3>
+              <div id="admin-payments-list" class="mt-5 space-y-4"></div>
+            </div>
           </section>
         </section>
       </main>

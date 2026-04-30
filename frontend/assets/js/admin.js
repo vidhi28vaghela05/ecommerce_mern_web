@@ -24,6 +24,9 @@ const els = {
   productReset: document.getElementById("product-reset"),
   categoryReset: document.getElementById("category-reset"),
   themeToggle: document.getElementById("theme-toggle"),
+  recentOrders: document.getElementById("admin-recent-orders"),
+  recentUsers: document.getElementById("admin-recent-users"),
+  paymentsList: document.getElementById("admin-payments-list"),
 };
 
 const money = (value) =>
@@ -120,25 +123,75 @@ const renderCategories = () => {
 };
 
 const renderOrders = () => {
-  els.ordersList.innerHTML = state.orders
+  const ordersHtml = state.orders
     .map(
       (order) => `
       <article class="rounded-3xl border border-slate-200 p-4 dark:border-slate-800">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h4 class="text-lg font-bold">Order #${order._id.slice(-6).toUpperCase()}</h4>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">${order.user?.name || "Guest"} • ${money(order.totalAmount)}</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">${order.user?.name || 'Guest'} • ${money(order.totalAmount)}</p>
           </div>
-          <select class="order-status rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" data-id="${order._id}">
-            ${["pending", "shipped", "delivered"]
-              .map((status) => `<option value="${status}" ${order.status === status ? "selected" : ""}>${status}</option>`)
-              .join("")}
+          <select class="update-order-status rounded-xl border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" data-id="${order._id}">
+            <option value="pending" ${order.status === "pending" ? "selected" : ""}>Pending</option>
+            <option value="shipped" ${order.status === "shipped" ? "selected" : ""}>Shipped</option>
+            <option value="delivered" ${order.status === "delivered" ? "selected" : ""}>Delivered</option>
+            <option value="canceled" ${order.status === "canceled" ? "selected" : ""}>Canceled</option>
           </select>
         </div>
       </article>
     `
     )
     .join("");
+  
+  if (els.ordersList) els.ordersList.innerHTML = ordersHtml;
+};
+
+const renderPayments = () => {
+  if (!els.paymentsList) return;
+  els.paymentsList.innerHTML = state.orders.length ? state.orders.map(order => `
+    <article class="rounded-3xl border border-slate-200 p-4 dark:border-slate-800">
+      <div class="flex items-center justify-between">
+        <div>
+          <h4 class="text-lg font-bold">Transaction #${order.stripeSessionId?.slice(-8) || order._id.slice(-8)}</h4>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Order #${order._id.slice(-6).toUpperCase()} • ${order.user?.email || 'Guest'}</p>
+          <div class="mt-2">
+            <span class="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+              order.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 
+              order.paymentStatus === 'refunded' ? 'bg-blue-100 text-blue-700' : 
+              'bg-amber-100 text-amber-700'
+            }">${order.paymentStatus}</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-lg font-bold ${order.paymentStatus === 'refunded' ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}">${money(order.totalAmount)}</p>
+          <p class="text-xs font-semibold text-slate-400">${new Date(order.createdAt).toLocaleDateString()}</p>
+          ${order.paymentStatus === 'paid' ? `
+            <button class="refund-payment mt-3 rounded-xl border border-rose-200 px-4 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-50 dark:border-rose-900/30" data-id="${order._id}">Issue Refund</button>
+          ` : ''}
+        </div>
+      </div>
+    </article>
+  `).join("") : `<p class="text-center text-slate-500 py-8">No payment transactions found.</p>`;
+};
+
+const renderRecent = () => {
+  if (els.recentOrders) {
+    els.recentOrders.innerHTML = state.orders.slice(0, 5).map(order => `
+      <div class="flex items-center justify-between text-sm">
+        <span>Order #${order._id.slice(-6).toUpperCase()}</span>
+        <span class="font-bold">${money(order.totalAmount)}</span>
+      </div>
+    `).join("");
+  }
+  if (els.recentUsers) {
+    els.recentUsers.innerHTML = state.users.slice(0, 5).map(user => `
+      <div class="flex items-center justify-between text-sm">
+        <span>${user.name}</span>
+        <span class="text-slate-500">${user.email}</span>
+      </div>
+    `).join("");
+  }
 };
 
 const renderUsers = () => {
@@ -198,11 +251,13 @@ const loadDashboard = async () => {
   state.users = usersResponse.users || [];
 
   renderStats(stats.stats);
-  renderCategoryOptions();
   renderProducts();
   renderCategories();
   renderOrders();
+  renderPayments();
+  renderRecent();
   renderUsers();
+  renderCategoryOptions();
 };
 
 const formDataFromProductForm = () => {
@@ -345,6 +400,18 @@ const bindEvents = () => {
       await adminApi.removeUser(deleteUser.dataset.id);
       await loadDashboard();
       toast("User deleted.");
+    }
+
+    const refundBtn = event.target.closest(".refund-payment");
+    if (refundBtn) {
+      if (!confirm("Are you sure you want to refund this payment?")) return;
+      try {
+        await adminApi.updatePaymentStatus(refundBtn.dataset.id, "refunded");
+        await loadDashboard();
+        toast("Payment refunded successfully.");
+      } catch (error) {
+        toast(error.message);
+      }
     }
   });
 

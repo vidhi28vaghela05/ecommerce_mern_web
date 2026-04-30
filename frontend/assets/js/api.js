@@ -104,6 +104,11 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
+  updatePaymentStatus: (id, paymentStatus) =>
+    request(`/admin/orders/${id}/payment-status`, {
+      method: "PATCH",
+      body: JSON.stringify({ paymentStatus }),
+    }),
   categories: () => request("/admin/categories"),
   createCategory: (payload) =>
     request("/admin/categories", { method: "POST", body: JSON.stringify(payload) }),

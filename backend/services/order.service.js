@@ -65,8 +65,20 @@ const updateOrderStatus = async (orderId, status) => {
   return order;
 };
 
+const updatePaymentStatus = async (orderId, paymentStatus) => {
+  const order = await Order.findById(orderId);
+  if (!order) {
+    throw new Error("Order not found.");
+  }
+
+  order.paymentStatus = paymentStatus;
+  await order.save();
+  return order;
+};
+
 module.exports = {
   createOrder,
   getUserOrders,
   updateOrderStatus,
+  updatePaymentStatus,
 };
