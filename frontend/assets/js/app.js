@@ -84,6 +84,10 @@ const els = {
   contactMessage: document.getElementById("contact-message"),
   contactSuccess: document.getElementById("contact-success"),
   contactSubmit: document.getElementById("contact-submit"),
+  userMessagesContainer: document.getElementById("user-messages-container"),
+  userChatForm: document.getElementById("user-chat-form"),
+  userChatInput: document.getElementById("user-chat-input"),
+  messagesNavBtn: document.querySelector('[data-section-target="messages"]'),
 };
 
 const money = (value) =>
@@ -152,6 +156,9 @@ const switchSection = (sectionId) => {
 
   if (sectionId === "orders" && state.user) {
     loadOrders();
+  }
+  if (sectionId === "messages" && state.user) {
+    loadUserMessages();
   }
   if (sectionId === "shop") {
     setLoading(true);
@@ -426,6 +433,7 @@ const renderAuthState = () => {
       els.chatWidget.classList.remove("hidden");
       els.chatWidget.classList.add("flex");
     }
+    if (els.messagesNavBtn) els.messagesNavBtn.classList.remove("hidden");
   } else {
     els.authTrigger.textContent = "Login";
     els.logoutTrigger.classList.add("hidden");
@@ -433,6 +441,7 @@ const renderAuthState = () => {
       els.adminLink.classList.remove("hidden");
     }
     document.querySelectorAll(".hero-auth-btn").forEach(btn => btn.classList.remove("hidden"));
+    if (els.messagesNavBtn) els.messagesNavBtn.classList.add("hidden");
   }
 };
 
@@ -904,6 +913,141 @@ const bindEvents = () => {
       }
     });
   }
+
+  if (els.userChatForm) {
+    els.userChatForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!els.userChatInput.value.trim() || !state.socket || !state.user) return;
+
+      const messageData = {
+        room: state.user._id,
+        sender: state.user._id,
+        receiver: "admin",
+        message: els.userChatInput.value.trim(),
+      };
+
+      state.socket.emit("sendMessage", messageData);
+      els.userChatInput.value = "";
+    });
+  }
+};
+
+const loadUserMessages = async () => {
+  if (!state.user) {
+    openAuthModal("login");
+    return;
+  }
+  
+  setupSocket();
+  try {
+    const history = await chatApi.getHistory(state.user._id);
+    renderUserMessages(history);
+  } catch (error) {
+    console.error("Failed to load message history", error);
+  }
+};
+
+const renderUserMessages = (messages) => {
+  if (!els.userMessagesContainer) return;
+  els.userMessagesContainer.innerHTML = "";
+  
+  if (messages.length === 0) {
+    els.userMessagesContainer.innerHTML = `
+      <div class="flex items-center justify-center h-full text-slate-500">
+        <div class="text-center">
+          <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">No messages yet</h3>
+          <p class="mt-1">Send a message to start a conversation with our support team.</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  messages.forEach((msg) => {
+    const isMine = msg.sender === state.user._id || (msg.sender && msg.sender._id === state.user._id);
+    const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    
+    els.userMessagesContainer.innerHTML += `
+      <div class="flex ${isMine ? "justify-end" : "justify-start"}">
+        <div class="max-w-[75%] space-y-1">
+          <div class="rounded-2xl px-4 py-2 text-sm shadow-sm ${
+            isMine
+              ? "bg-brand-600 text-white rounded-br-none"
+              : "bg-white text-slate-800 dark:bg-slate-800 dark:text-slate-100 rounded-bl-none"
+          }">
+            ${msg.message}
+          </div>
+          <p class="text-[10px] ${isMine ? "text-right" : "text-left"} text-slate-400 font-medium">${time}</p>
+        </div>
+      </div>
+    `;
+  });
+  
+  els.userMessagesContainer.scrollTop = els.userMessagesContainer.scrollHeight;
+};
+
+const setupSocket = () => {
+  if (state.socket) return;
+  
+  const SOCKET_URL = window.location.origin;
+  state.socket = io(SOCKET_URL);
+  state.socket.emit("join", state.user._id);
+
+  state.socket.on("message", (message) => {
+    // Update both mini chat and main messages section
+    
+    // logic for main messages section
+    if (els.userMessagesContainer) {
+      const isMine = message.sender === state.user._id;
+      const time = new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      
+      const msgHtml = `
+        <div class="flex ${isMine ? "justify-end" : "justify-start"}">
+          <div class="max-w-[75%] space-y-1">
+            <div class="rounded-2xl px-4 py-2 text-sm shadow-sm ${
+              isMine
+                ? "bg-brand-600 text-white rounded-br-none"
+                : "bg-white text-slate-800 dark:bg-slate-800 dark:text-slate-100 rounded-bl-none"
+            }">
+              ${message.message}
+            </div>
+            <p class="text-[10px] ${isMine ? "text-right" : "text-left"} text-slate-400 font-medium">${time}</p>
+          </div>
+        </div>
+      `;
+      
+      // If container was empty, clear the placeholder
+      if (els.userMessagesContainer.querySelector(".text-center")) {
+        els.userMessagesContainer.innerHTML = "";
+      }
+      
+      els.userMessagesContainer.innerHTML += msgHtml;
+      els.userMessagesContainer.scrollTop = els.userMessagesContainer.scrollHeight;
+    }
+
+    // Mini chat update logic
+    if (els.chatMessages) {
+      const isMine = message.sender === state.user._id;
+      els.chatMessages.innerHTML += `
+        <div class="flex ${isMine ? "justify-end" : "justify-start"}">
+          <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
+            isMine
+              ? "bg-brand-600 text-white rounded-br-none"
+              : "bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200 rounded-bl-none"
+          }">
+            ${message.message}
+            <div class="text-[10px] mt-1 ${isMine ? "text-brand-100" : "text-slate-400"}">
+              ${new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </div>
+          </div>
+        </div>
+      `;
+      els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
+    }
+  });
 };
 
 const initChat = () => {

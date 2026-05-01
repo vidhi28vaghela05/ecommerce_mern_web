@@ -47,6 +47,7 @@
           <button data-section-target="cart" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Cart</button>
           <button data-section-target="orders" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Orders</button>
           <button data-section-target="wishlist" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Wishlist</button>
+          <button data-section-target="messages" class="nav-btn text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Messages</button>
           <a href="/admin" id="admin-link" class="text-sm font-semibold text-slate-700 hover:text-brand-600 dark:text-slate-200">Admin</a>
         </nav>
         <div class="flex items-center gap-3">
@@ -337,6 +338,39 @@
               <p class="font-semibold">Hours</p>
               <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Mon–Sat, 9am–6pm</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-messages" class="section-hidden">
+        <div class="mx-auto max-w-4xl">
+          <div class="rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+            <div class="border-b border-slate-100 p-6 dark:border-slate-800 bg-brand-600 text-white flex items-center justify-between">
+              <div>
+                <h2 class="text-xl font-bold">Support Messages</h2>
+                <p class="text-sm opacity-90">Chat with our customer service team</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
+                <span class="text-xs font-semibold uppercase tracking-wider">Online</span>
+              </div>
+            </div>
+            
+            <div id="user-messages-container" class="h-[500px] overflow-y-auto p-6 space-y-4 bg-slate-50/50 dark:bg-slate-950/20">
+              <!-- Messages will load here -->
+              <div class="flex items-center justify-center h-full text-slate-500">
+                <p>Logging into chat...</p>
+              </div>
+            </div>
+
+            <form id="user-chat-form" class="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div class="flex gap-3">
+                <input id="user-chat-input" type="text" placeholder="Type your message..." class="flex-1 rounded-2xl border border-slate-200 px-4 py-3 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950" required />
+                <button type="submit" class="rounded-2xl bg-brand-600 px-6 py-3 font-bold text-white shadow-lg transition hover:bg-brand-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </section>

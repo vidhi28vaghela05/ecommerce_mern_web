@@ -1,5 +1,5 @@
 /* global io */
-import { adminApi, authApi, catalogApi, storage, chatApi, contactApi } from "./api.js";
+import { adminApi, authApi, catalogApi, storage, contactApi } from "./api.js";
 
 const state = {
   user: storage.getUser(),
@@ -7,10 +7,6 @@ const state = {
   categories: [],
   orders: [],
   users: [],
-  conversations: [],
-  activeRoom: null,
-  messages: [],
-  socket: null,
 };
 
 const els = {
@@ -32,13 +28,6 @@ const els = {
   recentOrders: document.getElementById("admin-recent-orders"),
   recentUsers: document.getElementById("admin-recent-users"),
   paymentsList: document.getElementById("admin-payments-list"),
-  conversationsList: document.getElementById("admin-conversations-list"),
-  chatArea: document.getElementById("admin-chat-area"),
-  chatPlaceholder: document.getElementById("admin-chat-placeholder"),
-  messagesList: document.getElementById("admin-messages-list"),
-  chatForm: document.getElementById("admin-chat-form"),
-  chatInput: document.getElementById("admin-chat-input"),
-  chatUserName: document.getElementById("chat-user-name"),
   chatUserEmail: document.getElementById("chat-user-email"),
   contactsList: document.getElementById("admin-contacts-list"),
   contactsCount: document.getElementById("contacts-count"),
@@ -273,8 +262,7 @@ const loadDashboard = async () => {
   renderRecent();
   renderUsers();
   renderCategoryOptions();
-  loadConversations();
-  setupSocket();
+  loadContacts();
 };
 
 const formDataFromProductForm = () => {
@@ -303,106 +291,7 @@ const setTheme = (theme) => {
   storage.setTheme(theme);
 };
 
-const renderConversations = () => {
-  if (!els.conversationsList) return;
-  els.conversationsList.innerHTML = state.conversations
-    .map(
-      (conv) => `
-      <div class="conversation-item flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition ${
-        state.activeRoom === conv._id ? "bg-brand-50 text-brand-600 dark:bg-brand-600/10" : "hover:bg-slate-50 dark:hover:bg-slate-800"
-      }" data-room="${conv._id}">
-        <div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold">
-          ${conv._id.slice(-2).toUpperCase()}
-        </div>
-        <div class="flex-1 overflow-hidden">
-          <div class="flex justify-between items-center">
-            <h5 class="font-semibold text-sm truncate">${conv._id}</h5>
-            ${conv.unreadCount > 0 ? `<span class="bg-brand-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">${conv.unreadCount}</span>` : ""}
-          </div>
-          <p class="text-xs text-slate-500 truncate">${conv.lastMessage}</p>
-        </div>
-      </div>
-    `
-    )
-    .join("");
 
-  document.querySelectorAll(".conversation-item").forEach((item) => {
-    item.addEventListener("click", () => selectConversation(item.dataset.room));
-  });
-};
-
-const renderMessages = () => {
-  if (!els.messagesList) return;
-  els.messagesList.innerHTML = state.messages
-    .map(
-      (msg) => `
-      <div class="flex ${msg.sender === "admin" || (msg.sender && msg.sender.role === "admin") ? "justify-end" : "justify-start"}">
-        <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
-          msg.sender === "admin" || (msg.sender && msg.sender.role === "admin")
-            ? "bg-brand-600 text-white rounded-br-none"
-            : "bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200 rounded-bl-none"
-        }">
-          ${msg.message}
-          <div class="text-[10px] mt-1 ${msg.sender === "admin" || (msg.sender && msg.sender.role === "admin") ? "text-brand-100" : "text-slate-400"}">
-            ${new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </div>
-        </div>
-      </div>
-    `
-    )
-    .join("");
-  els.messagesList.scrollTop = els.messagesList.scrollHeight;
-};
-
-const selectConversation = async (room) => {
-  state.activeRoom = room;
-  els.chatPlaceholder.classList.add("hidden");
-  els.chatArea.classList.remove("hidden");
-  
-  // Set user info (if we had it, but room is just ID for now)
-  els.chatUserName.textContent = `User ${room.slice(-6).toUpperCase()}`;
-  els.chatUserEmail.textContent = room;
-
-  renderConversations(); // Re-render to show active state
-
-  try {
-    const history = await chatApi.getHistory(room);
-    state.messages = history;
-    renderMessages();
-    
-    if (state.socket) {
-      state.socket.emit("join", room);
-    }
-  } catch (error) {
-    toast(error.message);
-  }
-};
-
-const setupSocket = () => {
-  if (state.socket) return;
-  
-  const SOCKET_URL = window.location.origin;
-  state.socket = io(SOCKET_URL);
-
-  state.socket.on("message", (message) => {
-    if (message.room === state.activeRoom) {
-      state.messages.push(message);
-      renderMessages();
-    }
-    // Refresh conversations list to show last message/unread
-    loadConversations();
-  });
-};
-
-const loadConversations = async () => {
-  try {
-    const conversations = await chatApi.getConversations();
-    state.conversations = conversations;
-    renderConversations();
-  } catch (error) {
-    console.error("Error loading conversations:", error);
-  }
-};
 
 const loadContacts = async () => {
   try {
@@ -583,21 +472,6 @@ const bindEvents = () => {
         refundBtn.textContent = "Issue Refund";
       }
     }
-  });
-
-  els.chatForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    if (!els.chatInput.value.trim() || !state.activeRoom || !state.socket) return;
-
-    const messageData = {
-      room: state.activeRoom,
-      sender: state.user._id, // Assuming admin ID
-      receiver: state.activeRoom,
-      message: els.chatInput.value.trim(),
-    };
-
-    state.socket.emit("sendMessage", messageData);
-    els.chatInput.value = "";
   });
 
   document.body.addEventListener("change", async (event) => {

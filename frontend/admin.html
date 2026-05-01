@@ -63,7 +63,7 @@
             <button data-admin-tab="orders" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Orders</button>
             <button data-admin-tab="payments" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Payments</button>
             <button data-admin-tab="users" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Users</button>
-            <button data-admin-tab="support" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Support</button>
+
             <button data-admin-tab="contacts" class="admin-tab rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">📩 Contacts</button>
           </div>
 
@@ -153,32 +153,7 @@
             </div>
           </section>
 
-          <section id="tab-support" class="admin-panel hidden">
-            <div class="grid h-[600px] gap-8 lg:grid-cols-[300px_1fr]">
-              <div class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900 flex flex-col">
-                <h3 class="text-xl font-bold">Conversations</h3>
-                <div id="admin-conversations-list" class="mt-5 flex-1 overflow-y-auto space-y-2"></div>
-              </div>
-              <div id="admin-chat-area" class="rounded-[2rem] bg-white shadow-sm dark:bg-slate-900 flex flex-col hidden">
-                <div class="border-b border-slate-100 p-6 dark:border-slate-800 flex items-center justify-between">
-                  <div>
-                    <h3 id="chat-user-name" class="text-xl font-bold">Select a user</h3>
-                    <p id="chat-user-email" class="text-sm text-slate-500"></p>
-                  </div>
-                </div>
-                <div id="admin-messages-list" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50 dark:bg-slate-950/30"></div>
-                <form id="admin-chat-form" class="p-6 border-t border-slate-100 dark:border-slate-800">
-                  <div class="flex gap-4">
-                    <input id="admin-chat-input" placeholder="Type a message..." class="flex-1 rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700 dark:bg-slate-950" />
-                    <button class="rounded-2xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white">Send</button>
-                  </div>
-                </form>
-              </div>
-              <div id="admin-chat-placeholder" class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900 flex items-center justify-center">
-                <p class="text-slate-500">Select a conversation to start chatting</p>
-              </div>
-            </div>
-          </section>
+
 
           <section id="tab-contacts" class="admin-panel hidden">
             <div class="rounded-[2rem] bg-white p-6 shadow-sm dark:bg-slate-900">

@@ -39,7 +39,9 @@ io.on("connection", (socket) => {
       io.to(room).emit("message", savedMsg);
 
       if (receiver === "admin") {
-        const aiReply = await chatService.getReply(message);
+        // Get recent chat history for context
+        const roomHistory = await chatService.getChatHistory(room);
+        const aiReply = await chatService.getReply(message, roomHistory);
         if (aiReply) {
           const savedAiMsg = await chatService.saveMessage({
             room,
