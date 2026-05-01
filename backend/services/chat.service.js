@@ -68,6 +68,30 @@ const getActiveConversations = async () => {
           },
         },
       },
+      {
+        $addFields: {
+          roomUserId: { $toObjectId: "$_id" },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "roomUserId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          lastMessage: 1,
+          lastTimestamp: 1,
+          unreadCount: 1,
+          userName: "$user.name",
+          userEmail: "$user.email",
+        },
+      },
       { $sort: { lastTimestamp: -1 } },
     ]);
     return conversations;

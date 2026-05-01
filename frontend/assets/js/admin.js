@@ -1,5 +1,5 @@
 /* global io */
-import { adminApi, authApi, catalogApi, storage, contactApi } from "./api.js";
+import { adminApi, authApi, catalogApi, storage, contactApi, chatApi } from "./api.js";
 
 const state = {
   user: storage.getUser(),
@@ -7,6 +7,10 @@ const state = {
   categories: [],
   orders: [],
   users: [],
+  conversations: [],
+  activeRoom: null,
+  messages: [],
+  socket: null,
 };
 
 const els = {
@@ -29,6 +33,13 @@ const els = {
   recentUsers: document.getElementById("admin-recent-users"),
   paymentsList: document.getElementById("admin-payments-list"),
   chatUserEmail: document.getElementById("chat-user-email"),
+  conversationsList: document.getElementById("admin-conversations-list"),
+  chatArea: document.getElementById("admin-chat-area"),
+  chatPlaceholder: document.getElementById("admin-chat-placeholder"),
+  messagesList: document.getElementById("admin-messages-list"),
+  chatForm: document.getElementById("admin-chat-form"),
+  chatInput: document.getElementById("admin-chat-input"),
+  chatUserName: document.getElementById("chat-user-name"),
   contactsList: document.getElementById("admin-contacts-list"),
   contactsCount: document.getElementById("contacts-count"),
 };
@@ -262,7 +273,9 @@ const loadDashboard = async () => {
   renderRecent();
   renderUsers();
   renderCategoryOptions();
+  loadConversations();
   loadContacts();
+  setupSocket();
 };
 
 const formDataFromProductForm = () => {
@@ -291,6 +304,108 @@ const setTheme = (theme) => {
   storage.setTheme(theme);
 };
 
+const renderConversations = () => {
+  if (!els.conversationsList) return;
+  els.conversationsList.innerHTML = state.conversations
+    .map(
+      (conv) => `
+      <div class="conversation-item flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition ${
+        state.activeRoom === conv._id ? "bg-brand-50 text-brand-600 dark:bg-brand-600/10" : "hover:bg-slate-50 dark:hover:bg-slate-800"
+      }" data-room="${conv._id}">
+        <div class="h-10 w-10 rounded-full bg-brand-600/10 text-brand-600 flex items-center justify-center font-bold">
+          ${(conv.userName || "U").charAt(0).toUpperCase()}
+        </div>
+        <div class="flex-1 overflow-hidden">
+          <div class="flex justify-between items-center">
+            <h5 class="font-semibold text-sm truncate">${conv.userName || conv._id}</h5>
+            ${conv.unreadCount > 0 ? `<span class="bg-brand-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">${conv.unreadCount}</span>` : ""}
+          </div>
+          <p class="text-xs text-slate-500 truncate">${conv.lastMessage}</p>
+        </div>
+      </div>
+    `
+    )
+    .join("");
+
+  document.querySelectorAll(".conversation-item").forEach((item) => {
+    item.addEventListener("click", () => selectConversation(item.dataset.room));
+  });
+};
+
+const renderMessages = () => {
+  if (!els.messagesList) return;
+  els.messagesList.innerHTML = state.messages
+    .map(
+      (msg) => `
+      <div class="flex ${msg.sender === state.user._id || msg.sender === "admin" || (msg.sender && msg.sender.role === "admin") ? "justify-end" : "justify-start"}">
+        <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
+          msg.sender === state.user._id || msg.sender === "admin" || (msg.sender && msg.sender.role === "admin")
+            ? "bg-brand-600 text-white rounded-br-none"
+            : "bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200 rounded-bl-none"
+        }">
+          ${msg.message}
+          <div class="text-[10px] mt-1 ${msg.sender === state.user._id || msg.sender === "admin" || (msg.sender && msg.sender.role === "admin") ? "text-brand-100" : "text-slate-400"}">
+            ${new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </div>
+        </div>
+      </div>
+    `
+    )
+    .join("");
+  els.messagesList.scrollTop = els.messagesList.scrollHeight;
+};
+
+const selectConversation = async (room) => {
+  state.activeRoom = room;
+  els.chatPlaceholder.classList.add("hidden");
+  els.chatArea.classList.remove("hidden");
+  
+  const conv = state.conversations.find((c) => c._id === room);
+  els.chatUserName.textContent = conv && conv.userName ? conv.userName : `User ${room.slice(-6).toUpperCase()}`;
+  els.chatUserEmail.textContent = conv && conv.userEmail ? conv.userEmail : room;
+
+  renderConversations();
+
+  try {
+    const history = await chatApi.getHistory(room, "admin");
+    state.messages = history;
+    renderMessages();
+    
+    if (state.socket) {
+      state.socket.emit("join", room);
+    }
+  } catch (error) {
+    toast(error.message);
+  }
+};
+
+const setupSocket = () => {
+  if (state.socket) return;
+  
+  const SOCKET_URL = window.location.origin;
+  state.socket = io(SOCKET_URL);
+
+  state.socket.on("message", (message) => {
+    if (message.chatType === "admin") {
+      if (message.room === state.activeRoom) {
+        state.messages.push(message);
+        renderMessages();
+      }
+      loadConversations();
+    }
+  });
+};
+
+const loadConversations = async () => {
+  try {
+    const conversations = await chatApi.getConversations();
+    state.conversations = conversations;
+    renderConversations();
+  } catch (error) {
+    console.error("Error loading conversations:", error);
+  }
+};
+
 
 
 const loadContacts = async () => {
@@ -304,26 +419,31 @@ const loadContacts = async () => {
       return;
     }
     els.contactsList.innerHTML = contacts.map(c => `
-      <article class="rounded-3xl border border-slate-200 p-5 dark:border-slate-800" data-contact-id="${c._id}">
-        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div class="flex-1">
-            <div class="flex items-center gap-3">
-              <span class="inline-block h-2.5 w-2.5 rounded-full ${c.status === 'new' ? 'bg-brand-600' : c.status === 'read' ? 'bg-slate-400' : 'bg-green-500'}"></span>
-              <h4 class="font-bold text-lg">${c.name}</h4>
-              <span class="text-sm text-slate-500">${c.email}</span>
-              <span class="ml-auto rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${
-                c.status === 'new' ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/30' :
-                c.status === 'replied' ? 'bg-green-50 text-green-600 dark:bg-green-900/30' :
-                'bg-slate-100 text-slate-500 dark:bg-slate-800'
-              }">${c.status}</span>
+      <article class="rounded-3xl border border-slate-100 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50" data-contact-id="${c._id}">
+        <div class="flex flex-col gap-4">
+          <div class="flex items-start justify-between">
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="h-2 w-2 rounded-full ${c.status === 'new' ? 'bg-brand-600' : 'bg-slate-300'}"></span>
+                  <h4 class="font-bold text-slate-900 dark:text-white truncate">${c.name}</h4>
+                </div>
+                <span class="text-xs text-slate-500 truncate">${c.email}</span>
+                <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                  c.status === 'new' ? 'bg-brand-50 text-brand-600' :
+                  c.status === 'replied' ? 'bg-green-50 text-green-600' :
+                  'bg-slate-100 text-slate-500'
+                }">${c.status}</span>
+              </div>
+              <p class="mt-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">${c.message}</p>
+              <p class="mt-3 text-[10px] text-slate-400 font-medium">${new Date(c.createdAt).toLocaleString()}</p>
             </div>
-            <p class="mt-2 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">${c.message}</p>
-            <p class="mt-2 text-xs text-slate-400">${new Date(c.createdAt).toLocaleString()}</p>
           </div>
-          <div class="flex gap-2 flex-shrink-0">
-            ${c.status === 'new' ? `<button class="contact-mark-read rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold dark:border-slate-700" data-id="${c._id}">Mark Read</button>` : ''}
-            <button class="contact-mark-replied rounded-xl border border-green-200 px-3 py-1.5 text-xs font-semibold text-green-600" data-id="${c._id}">Replied</button>
-            <button class="contact-delete rounded-xl border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600" data-id="${c._id}">Delete</button>
+          <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <button class="contact-reply-chat rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-700" data-email="${c.email}">Reply via Chat</button>
+            ${c.status === 'new' ? `<button class="contact-mark-read rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold dark:border-slate-700" data-id="${c._id}">Mark Read</button>` : ''}
+            <button class="contact-mark-replied rounded-xl border border-green-200 px-4 py-2 text-xs font-bold text-green-600" data-id="${c._id}">Mark Replied</button>
+            <button class="contact-delete rounded-xl border border-rose-100 px-4 py-2 text-xs font-bold text-rose-500 hover:bg-rose-50" data-id="${c._id}">Delete</button>
           </div>
         </div>
       </article>
@@ -375,6 +495,50 @@ const bindEvents = () => {
 
   els.productReset.addEventListener("click", resetProductForm);
   els.categoryReset.addEventListener("click", resetCategoryForm);
+
+  els.chatForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!els.chatInput.value.trim() || !state.activeRoom || !state.socket) return;
+
+    const messageData = {
+      room: state.activeRoom,
+      sender: state.user._id,
+      receiver: state.activeRoom,
+      message: els.chatInput.value.trim(),
+      isAiChat: false,
+    };
+
+    state.socket.emit("sendMessage", messageData);
+    els.chatInput.value = "";
+  });
+
+  els.contactsList.addEventListener("click", async (e) => {
+    const id = e.target.dataset.id;
+    if (e.target.classList.contains("contact-reply-chat")) {
+      const email = e.target.dataset.email;
+      const conversation = state.conversations.find((conv) => conv.userEmail === email);
+      if (conversation) {
+        selectConversation(conversation._id);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        toast("This user hasn't started a live chat yet. They must visit the 'Messages' page first.");
+      }
+      return;
+    }
+
+    if (e.target.classList.contains("contact-mark-read")) {
+      await contactApi.updateStatus(id, "read");
+      loadContacts();
+    } else if (e.target.classList.contains("contact-mark-replied")) {
+      await contactApi.updateStatus(id, "replied");
+      loadContacts();
+    } else if (e.target.classList.contains("contact-delete")) {
+      if (confirm("Are you sure?")) {
+        await contactApi.remove(id);
+        loadContacts();
+      }
+    }
+  });
 
   els.productForm.addEventListener("submit", async (event) => {
     event.preventDefault();
