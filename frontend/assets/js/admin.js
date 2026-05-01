@@ -361,8 +361,10 @@ const selectConversation = async (room) => {
   els.chatArea.classList.remove("hidden");
   
   const conv = state.conversations.find((c) => c._id === room);
-  els.chatUserName.textContent = conv && conv.userName ? conv.userName : `User ${room.slice(-6).toUpperCase()}`;
-  els.chatUserEmail.textContent = conv && conv.userEmail ? conv.userEmail : room;
+  const user = state.users.find((u) => u._id === room);
+  
+  els.chatUserName.textContent = conv && conv.userName ? conv.userName : (user ? user.name : `User ${room.slice(-6).toUpperCase()}`);
+  els.chatUserEmail.textContent = conv && conv.userEmail ? conv.userEmail : (user ? user.email : room);
 
   renderConversations();
 
