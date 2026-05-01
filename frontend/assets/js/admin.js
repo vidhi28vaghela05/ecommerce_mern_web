@@ -440,9 +440,8 @@ const loadContacts = async () => {
             </div>
           </div>
           <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <button class="contact-reply-chat rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-700" data-email="${c.email}">Reply via Chat</button>
+            <button class="contact-reply-chat rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-700" data-email="${c.email}" data-id="${c._id}">Reply</button>
             ${c.status === 'new' ? `<button class="contact-mark-read rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold dark:border-slate-700" data-id="${c._id}">Mark Read</button>` : ''}
-            <button class="contact-mark-replied rounded-xl border border-green-200 px-4 py-2 text-xs font-bold text-green-600" data-id="${c._id}">Mark Replied</button>
             <button class="contact-delete rounded-xl border border-rose-100 px-4 py-2 text-xs font-bold text-rose-500 hover:bg-rose-50" data-id="${c._id}">Delete</button>
           </div>
         </div>
@@ -516,12 +515,21 @@ const bindEvents = () => {
     const id = e.target.dataset.id;
     if (e.target.classList.contains("contact-reply-chat")) {
       const email = e.target.dataset.email;
-      const conversation = state.conversations.find((conv) => conv.userEmail === email);
-      if (conversation) {
-        selectConversation(conversation._id);
+      const contactId = e.target.dataset.id;
+      
+      // Find user by email in loaded users list
+      const user = state.users.find(u => u.email === email);
+      
+      if (user) {
+        // Mark contact as replied automatically
+        await contactApi.updateStatus(contactId, "replied");
+        loadContacts();
+        
+        // Open chat room
+        selectConversation(user._id);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        toast("This user hasn't started a live chat yet. They must visit the 'Messages' page first.");
+        toast("This user is not registered on LuxeCart. Live chat is only available for registered users.");
       }
       return;
     }
