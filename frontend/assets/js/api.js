@@ -121,3 +121,15 @@ export const adminApi = {
     request(`/admin/products/${id}`, { method: "PUT", body: formData }),
   deleteProduct: (id) => request(`/admin/products/${id}`, { method: "DELETE" }),
 };
+
+export const chatApi = {
+  getHistory: (room) => request(`/chat/history/${room}`),
+  getConversations: () => request("/chat/conversations"),
+};
+
+export const contactApi = {
+  submit: (payload) => request("/contact", { method: "POST", body: JSON.stringify(payload) }),
+  list: () => request("/admin/contacts"),
+  updateStatus: (id, status) => request(`/admin/contacts/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  remove: (id) => request(`/admin/contacts/${id}`, { method: "DELETE" }),
+};

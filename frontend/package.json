@@ -2,13 +2,33 @@
   "name": "ecommerce-frontend",
   "private": true,
   "version": "2.0.0",
-  "description": "Static HTML, Tailwind CSS and JavaScript frontend served by the Express backend.",
   "type": "module",
   "scripts": {
-    "start": "echo Frontend is served by backend/app.js",
     "dev": "vite",
     "build": "vite build",
+    "lint": "eslint .",
     "preview": "vite preview"
-
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0-alpha.31",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.12.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^4.0.0-alpha.31",
+    "vite": "^6.0.1"
   }
 }

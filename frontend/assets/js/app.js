@@ -1,4 +1,5 @@
-import { authApi, catalogApi, cartApi, orderApi, paymentApi, storage, wishlistApi } from "./api.js";
+/* global io */
+import { authApi, catalogApi, cartApi, orderApi, paymentApi, storage, wishlistApi, chatApi, contactApi } from "./api.js";
 
 const state = {
   mode: "login",
@@ -69,6 +70,20 @@ const els = {
   scrollTop: document.getElementById("scroll-top"),
   navSearchInput: document.getElementById("nav-search-input"),
   paginationContainer: document.getElementById("pagination-container"),
+  chatWidget: document.getElementById("chat-widget"),
+  chatToggle: document.getElementById("chat-toggle"),
+  chatWindow: document.getElementById("chat-window"),
+  chatIconOpen: document.getElementById("chat-icon-open"),
+  chatIconClose: document.getElementById("chat-icon-close"),
+  chatMessages: document.getElementById("chat-messages"),
+  chatForm: document.getElementById("chat-form"),
+  chatInput: document.getElementById("chat-input"),
+  contactForm: document.getElementById("contact-form"),
+  contactName: document.getElementById("contact-name"),
+  contactEmail: document.getElementById("contact-email"),
+  contactMessage: document.getElementById("contact-message"),
+  contactSuccess: document.getElementById("contact-success"),
+  contactSubmit: document.getElementById("contact-submit"),
 };
 
 const money = (value) =>
@@ -407,11 +422,15 @@ const renderAuthState = () => {
       els.profileForm.email.value = state.user.email;
       els.profileForm.phone.value = state.user.phone || "";
     }
+    if (els.chatWidget) {
+      els.chatWidget.classList.remove("hidden");
+      els.chatWidget.classList.add("flex");
+    }
   } else {
     els.authTrigger.textContent = "Login";
     els.logoutTrigger.classList.add("hidden");
     if (els.adminLink) {
-      els.adminLink.classList.add("hidden");
+      els.adminLink.classList.remove("hidden");
     }
     document.querySelectorAll(".hero-auth-btn").forEach(btn => btn.classList.remove("hidden"));
   }
@@ -476,7 +495,7 @@ const hydrateUser = async () => {
     const response = await authApi.me();
     state.user = response.user;
     storage.setUser(response.user);
-  } catch (_error) {
+  } catch {
     state.user = null;
     storage.clearToken();
     storage.clearUser();
@@ -682,7 +701,7 @@ const bindEvents = () => {
       state.filters.search = els.searchInput.value.trim();
       try {
         await loadProducts();
-      } catch (e) {}
+      } catch (error) { console.error(error); }
     }, 600);
   });
 
@@ -708,7 +727,7 @@ const bindEvents = () => {
       state.filters.search = val;
       try {
         await loadProducts();
-      } catch (e) {}
+      } catch (error) { console.error(error); }
     }, 600);
   });
 
@@ -860,11 +879,140 @@ const bindEvents = () => {
   els.scrollTop.addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
+
+  // Contact form submit
+  if (els.contactForm) {
+    els.contactForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = els.contactName.value.trim();
+      const email = els.contactEmail.value.trim();
+      const message = els.contactMessage.value.trim();
+      if (!name || !email || !message) return;
+
+      els.contactSubmit.disabled = true;
+      els.contactSubmit.textContent = "Sending...";
+      try {
+        await contactApi.submit({ name, email, message });
+        els.contactForm.reset();
+        els.contactSuccess.classList.remove("hidden");
+        setTimeout(() => els.contactSuccess.classList.add("hidden"), 5000);
+      } catch (error) {
+        showToast(error.message || "Failed to send message.", true);
+      } finally {
+        els.contactSubmit.disabled = false;
+        els.contactSubmit.textContent = "Send Message";
+      }
+    });
+  }
+};
+
+const initChat = () => {
+  let isChatOpen = false;
+
+  els.chatToggle.addEventListener("click", async () => {
+    if (!state.user) {
+      showToast("Please login to use the support chat.", true);
+      openAuthModal("login");
+      return;
+    }
+
+    isChatOpen = !isChatOpen;
+    els.chatWindow.classList.toggle("hidden", !isChatOpen);
+    els.chatIconOpen.classList.toggle("hidden", isChatOpen);
+    els.chatIconClose.classList.toggle("hidden", !isChatOpen);
+
+    if (isChatOpen) {
+      setupSocket();
+      try {
+        const history = await chatApi.getHistory(state.user._id);
+        renderMessages(history);
+      } catch (error) {
+        console.error("Failed to load chat history", error);
+      }
+    }
+  });
+
+  const renderMessages = (messages) => {
+    els.chatMessages.innerHTML = "";
+    if (messages.length === 0) {
+      els.chatMessages.innerHTML = `
+        <div class="text-center text-slate-500 mt-10">
+          <p>Hello ${state.user.name || "there"}! 👋</p>
+          <p class="text-sm">How can we help you today?</p>
+        </div>
+      `;
+      return;
+    }
+
+    messages.forEach((msg) => {
+      const isMine = msg.sender === state.user._id || (msg.sender && msg.sender._id === state.user._id);
+      els.chatMessages.innerHTML += `
+        <div class="flex ${isMine ? "justify-end" : "justify-start"}">
+          <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
+            isMine
+              ? "bg-brand-600 text-white rounded-br-none"
+              : "bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200 rounded-bl-none"
+          }">
+            ${msg.message}
+            <div class="text-[10px] mt-1 ${isMine ? "text-brand-100" : "text-slate-400"}">
+              ${new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
+  };
+
+  const setupSocket = () => {
+    if (state.socket) return;
+    
+    const SOCKET_URL = window.location.origin;
+    state.socket = io(SOCKET_URL);
+    state.socket.emit("join", state.user._id);
+
+    state.socket.on("message", (message) => {
+      // Append message locally and scroll to bottom
+      const isMine = message.sender === state.user._id;
+      els.chatMessages.innerHTML += `
+        <div class="flex ${isMine ? "justify-end" : "justify-start"}">
+          <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
+            isMine
+              ? "bg-brand-600 text-white rounded-br-none"
+              : "bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200 rounded-bl-none"
+          }">
+            ${message.message}
+            <div class="text-[10px] mt-1 ${isMine ? "text-brand-100" : "text-slate-400"}">
+              ${new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </div>
+          </div>
+        </div>
+      `;
+      els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
+    });
+  };
+
+  els.chatForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!els.chatInput.value.trim() || !state.socket) return;
+
+    const messageData = {
+      room: state.user._id,
+      sender: state.user._id,
+      receiver: "admin",
+      message: els.chatInput.value.trim(),
+    };
+
+    state.socket.emit("sendMessage", messageData);
+    els.chatInput.value = "";
+  });
 };
 
 const init = async () => {
   setTheme(storage.getTheme());
   bindEvents();
+  initChat();
+
   setLoading(true);
   try {
     await hydrateUser();

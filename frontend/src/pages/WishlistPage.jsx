@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
-import { wishlistAPI, productAPI } from '../services/api';
+import { wishlistAPI } from '../services/api';
 import { DataContext } from '../context/UserContext';
 
 const WishlistPage = () => {
   const { centerData } = useContext(DataContext);
   const navigate = useNavigate();
-  const [wishlist, setWishlist] = useState(null);
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

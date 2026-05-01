@@ -7,6 +7,8 @@ const orderRoutes = require("./order.routes");
 const adminRoutes = require("./admin.routes");
 const paymentRoutes = require("./payment.routes");
 const wishlistRoutes = require("./wishlist.routes");
+const chatRoutes = require("./chat.routes");
+const contactRoutes = require("./contact.routes");
 
 const router = express.Router();
 
@@ -22,5 +24,7 @@ router.use("/orders", orderRoutes);
 router.use("/admin", adminRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/wishlist", wishlistRoutes);
+router.use("/chat", chatRoutes);
+router.use("/contact", contactRoutes);
 
 module.exports = router;

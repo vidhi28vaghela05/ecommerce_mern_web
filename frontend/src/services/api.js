@@ -75,7 +75,9 @@ export const wishlistAPI = {
 
 // Chat APIs
 export const chatAPI = {
-  sendMessage: (message) => api.post('/bot', { message }),
+  getHistory: (room) => api.get(`/chat/history/${room}`),
+  getConversations: () => api.get('/chat/conversations'),
+  sendMessage: (message) => api.post('/bot', { message }), // Existing bot API
 };
 
 // Admin APIs

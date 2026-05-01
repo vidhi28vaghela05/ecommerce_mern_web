@@ -6,10 +6,63 @@ const cookieParser = require("cookie-parser");
 const connectToDb = require("./config/db");
 const apiRouter = require("./routes/api");
 
-const app = express();
+const http = require("http");
+const { Server } = require("socket.io");
+const chatService = require("./services/chat.service");
+
 const PORT = process.env.PORT || 5000;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5000";
 const frontendPath = path.join(__dirname, "..", "frontend");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: FRONTEND_URL,
+    credentials: true,
+  },
+});
+
+// Socket logic
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+
+  socket.on("join", (room) => {
+    socket.join(room);
+    console.log(`User joined room: ${room}`);
+  });
+
+  socket.on("sendMessage", async (data) => {
+    try {
+      const { room, sender, receiver, message } = data;
+      const savedMsg = await chatService.saveMessage({ room, sender, receiver, message });
+      io.to(room).emit("message", savedMsg);
+
+      if (receiver === "admin") {
+        const aiReply = await chatService.getReply(message);
+        if (aiReply) {
+          const savedAiMsg = await chatService.saveMessage({
+            room,
+            sender: "admin",
+            receiver: sender,
+            message: aiReply,
+          });
+          io.to(room).emit("message", savedAiMsg);
+        }
+      }
+    } catch (error) {
+      console.error("Socket error:", error);
+    }
+  });
+
+  socket.on("typing", (data) => {
+    socket.to(data.room).emit("typing", data);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
+});
 
 app.use(
   cors({
@@ -54,7 +107,7 @@ app.use((err, _req, res, _next) => {
 const startServer = async () => {
   try {
     await connectToDb();
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
   } catch (error) {
@@ -64,3 +117,4 @@ const startServer = async () => {
 };
 
 startServer();
+

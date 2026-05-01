@@ -14,6 +14,8 @@ import AdminPage from "./pages/AdminPage";
 import Support from "./pages/Support";
 import { ProtectedRoute, PublicRoute, AdminRoute } from "./context/RoutesGuard";
 
+import ChatWidget from "./components/ChatWidget";
+
 const App = () => {
   return (
     <>
@@ -41,6 +43,7 @@ const App = () => {
           <Route path="/admin" element={<AdminPage />} />
         </Route>
       </Routes>
+      <ChatWidget />
     </>
   );
 };

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // save and make your data centerlize
 
 import { createContext, useState, useEffect } from "react";

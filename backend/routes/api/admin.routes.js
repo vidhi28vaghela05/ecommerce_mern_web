@@ -1,6 +1,7 @@
 const express = require("express");
 const adminController = require("../../controllers/admin.controller");
 const productController = require("../../controllers/product.controller");
+const contactController = require("../../controllers/contact.controller");
 const { authUser } = require("../../middlewares/user.middleware");
 const { authAdmin } = require("../../middlewares/admin.middleware");
 const upload = require("../../middlewares/upload.middleware");
@@ -22,5 +23,8 @@ router.delete("/categories/:id", adminController.deleteCategory);
 router.post("/products", upload.array("images", 4), productController.createProduct);
 router.put("/products/:id", upload.array("images", 4), productController.updateProduct);
 router.delete("/products/:id", productController.deleteProduct);
+router.get("/contacts", contactController.list);
+router.patch("/contacts/:id/status", contactController.updateStatus);
+router.delete("/contacts/:id", contactController.remove);
 
 module.exports = router;

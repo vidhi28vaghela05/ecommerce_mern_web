@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { DataContext } from "../context/UserContext";
 
 const EditProfile = () => {
-  const [error, setError] = useState("");
   const [formData, setFormData] = useState({ email: "", username: "" });
 
   const { centerData } = useContext(DataContext);
@@ -37,7 +36,6 @@ const EditProfile = () => {
       navigate("/profile");
     } catch (error) {
       console.log(error.response);
-      setError(error.response);
     }
   };
 
