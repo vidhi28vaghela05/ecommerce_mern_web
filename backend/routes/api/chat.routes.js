@@ -7,7 +7,8 @@ const { authAdmin } = require("../../middlewares/admin.middleware");
 // Get chat history for a room
 router.get("/history/:room", authUser, async (req, res) => {
   try {
-    const history = await chatService.getChatHistory(req.params.room);
+    const chatType = req.query.type || "admin";
+    const history = await chatService.getChatHistory(req.params.room, chatType);
     res.json(history);
   } catch (error) {
     res.status(500).json({ message: error.message });

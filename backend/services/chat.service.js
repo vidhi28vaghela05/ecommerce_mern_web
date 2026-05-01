@@ -42,9 +42,9 @@ const saveMessage = async (data) => {
   }
 };
 
-const getChatHistory = async (room) => {
+const getChatHistory = async (room, chatType = "admin") => {
   try {
-    return await ChatMessage.find({ room })
+    return await ChatMessage.find({ room, chatType })
       .populate("sender", "name email")
       .sort({ createdAt: 1 });
   } catch (error) {
@@ -56,6 +56,7 @@ const getChatHistory = async (room) => {
 const getActiveConversations = async () => {
   try {
     const conversations = await ChatMessage.aggregate([
+      { $match: { chatType: "admin" } },
       { $sort: { createdAt: -1 } },
       {
         $group: {

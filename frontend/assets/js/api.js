@@ -123,7 +123,7 @@ export const adminApi = {
 };
 
 export const chatApi = {
-  getHistory: (room) => request(`/chat/history/${room}`),
+  getHistory: (room, type = "admin") => request(`/chat/history/${room}?type=${type}`),
   getConversations: () => request("/chat/conversations"),
 };
 

@@ -924,6 +924,7 @@ const bindEvents = () => {
         sender: state.user._id,
         receiver: "admin",
         message: els.userChatInput.value.trim(),
+        isAiChat: false,
       };
 
       state.socket.emit("sendMessage", messageData);
@@ -940,7 +941,7 @@ const loadUserMessages = async () => {
   
   setupSocket();
   try {
-    const history = await chatApi.getHistory(state.user._id);
+    const history = await chatApi.getHistory(state.user._id, "admin");
     renderUserMessages(history);
   } catch (error) {
     console.error("Failed to load message history", error);
@@ -997,13 +998,11 @@ const setupSocket = () => {
   state.socket.emit("join", state.user._id);
 
   state.socket.on("message", (message) => {
-    // Update both mini chat and main messages section
-    
-    // logic for main messages section
-    if (els.userMessagesContainer) {
-      const isMine = message.sender === state.user._id;
-      const time = new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      
+    const isMine = message.sender === state.user._id || (message.sender && message.sender._id === state.user._id);
+    const time = new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    // 1. Route to Messages Page (Admin contact)
+    if (message.chatType === "admin" && els.userMessagesContainer) {
       const msgHtml = `
         <div class="flex ${isMine ? "justify-end" : "justify-start"}">
           <div class="max-w-[75%] space-y-1">
@@ -1018,19 +1017,13 @@ const setupSocket = () => {
           </div>
         </div>
       `;
-      
-      // If container was empty, clear the placeholder
-      if (els.userMessagesContainer.querySelector(".text-center")) {
-        els.userMessagesContainer.innerHTML = "";
-      }
-      
+      if (els.userMessagesContainer.querySelector(".text-center")) els.userMessagesContainer.innerHTML = "";
       els.userMessagesContainer.innerHTML += msgHtml;
       els.userMessagesContainer.scrollTop = els.userMessagesContainer.scrollHeight;
     }
 
-    // Mini chat update logic
-    if (els.chatMessages) {
-      const isMine = message.sender === state.user._id;
+    // 2. Route to Support Chat (AI chat)
+    if (message.chatType === "ai" && els.chatMessages) {
       els.chatMessages.innerHTML += `
         <div class="flex ${isMine ? "justify-end" : "justify-start"}">
           <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
@@ -1040,7 +1033,7 @@ const setupSocket = () => {
           }">
             ${message.message}
             <div class="text-[10px] mt-1 ${isMine ? "text-brand-100" : "text-slate-400"}">
-              ${new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              ${time}
             </div>
           </div>
         </div>
@@ -1068,7 +1061,7 @@ const initChat = () => {
     if (isChatOpen) {
       setupSocket();
       try {
-        const history = await chatApi.getHistory(state.user._id);
+        const history = await chatApi.getHistory(state.user._id, "ai");
         renderMessages(history);
       } catch (error) {
         console.error("Failed to load chat history", error);
@@ -1108,33 +1101,7 @@ const initChat = () => {
     els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
   };
 
-  const setupSocket = () => {
-    if (state.socket) return;
-    
-    const SOCKET_URL = window.location.origin;
-    state.socket = io(SOCKET_URL);
-    state.socket.emit("join", state.user._id);
 
-    state.socket.on("message", (message) => {
-      // Append message locally and scroll to bottom
-      const isMine = message.sender === state.user._id;
-      els.chatMessages.innerHTML += `
-        <div class="flex ${isMine ? "justify-end" : "justify-start"}">
-          <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
-            isMine
-              ? "bg-brand-600 text-white rounded-br-none"
-              : "bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200 rounded-bl-none"
-          }">
-            ${message.message}
-            <div class="text-[10px] mt-1 ${isMine ? "text-brand-100" : "text-slate-400"}">
-              ${new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </div>
-          </div>
-        </div>
-      `;
-      els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
-    });
-  };
 
   els.chatForm.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -1145,6 +1112,7 @@ const initChat = () => {
       sender: state.user._id,
       receiver: "admin",
       message: els.chatInput.value.trim(),
+      isAiChat: true,
     };
 
     state.socket.emit("sendMessage", messageData);

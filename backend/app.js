@@ -34,13 +34,21 @@ io.on("connection", (socket) => {
 
   socket.on("sendMessage", async (data) => {
     try {
-      const { room, sender, receiver, message } = data;
-      const savedMsg = await chatService.saveMessage({ room, sender, receiver, message });
+      const { room, sender, receiver, message, isAiChat } = data;
+      const chatType = isAiChat ? "ai" : "admin";
+
+      const savedMsg = await chatService.saveMessage({ 
+        room, 
+        sender, 
+        receiver, 
+        message,
+        chatType 
+      });
       io.to(room).emit("message", savedMsg);
 
-      if (receiver === "admin") {
-        // Get recent chat history for context
-        const roomHistory = await chatService.getChatHistory(room);
+      if (receiver === "admin" && isAiChat) {
+        // Get recent chat history for context (AI type only)
+        const roomHistory = await chatService.getChatHistory(room, "ai");
         const aiReply = await chatService.getReply(message, roomHistory);
         if (aiReply) {
           const savedAiMsg = await chatService.saveMessage({
@@ -48,6 +56,7 @@ io.on("connection", (socket) => {
             sender: "admin",
             receiver: sender,
             message: aiReply,
+            chatType: "ai",
           });
           io.to(room).emit("message", savedAiMsg);
         }

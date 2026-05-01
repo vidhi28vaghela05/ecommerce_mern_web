@@ -23,6 +23,11 @@ const chatMessageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    chatType: {
+      type: String,
+      enum: ["ai", "admin"],
+      default: "admin",
+    },
   },
   { timestamps: true }
 );
