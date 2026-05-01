@@ -1,11 +1,11 @@
 const ChatMessage = require("../models/chat.model");
 
-let GoogleGenAI;
+let GoogleGenerativeAI;
 try {
-  const genai = require("@google/genai");
-  GoogleGenAI = genai.GoogleGenAI;
+  const genai = require("@google/generative-ai");
+  GoogleGenerativeAI = genai.GoogleGenerativeAI;
 } catch (e) {
-  console.warn("Google GenAI not installed, AI chatbot will be disabled.");
+  console.warn("Google Generative AI not installed, AI chatbot will be disabled.");
 }
 
 // ─── System Instruction ───────────────────────────────────────────────────────
@@ -136,33 +136,48 @@ const getStaticReply = (message) => {
 // ─── AI Bot (Gemini) ──────────────────────────────────────────────────────────
 const getAiReply = async (message, roomHistory = []) => {
   try {
-    if (!GoogleGenAI || !process.env.GEMINI_API_KEY) return null;
+    if (!GoogleGenerativeAI || !process.env.GEMINI_API_KEY) {
+      console.warn("AI Chatbot disabled: GoogleGenerativeAI or API key missing.");
+      return null;
+    }
+    
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
+    // Build alternating history
+    const historyContents = [];
+    let lastRole = null;
+    
+    roomHistory.slice(-10).forEach((msg) => {
+      const role = String(msg.sender) === "admin" ? "model" : "user";
+      if (role !== lastRole) {
+        historyContents.push({ role, parts: [{ text: msg.message }] });
+        lastRole = role;
+      }
+    });
 
-    // Build conversation history for context (last 10 messages only)
-    const historyContents = roomHistory.slice(-10).map((msg) => ({
-      role: String(msg.sender) === "admin" ? "model" : "user",
-      parts: [{ text: msg.message }],
-    }));
-
-    // Add current user message
-    historyContents.push({ role: "user", parts: [{ text: message }] });
+    // If history ends with user, the API will fail when we send the next user message
+    // So we must remove the last user message from history
+    if (historyContents.length > 0 && historyContents[historyContents.length - 1].role === "user") {
+      historyContents.pop();
+    }
 
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-flash-latest",
       systemInstruction: SYSTEM_INSTRUCTION 
     });
 
+    console.log("Calling Gemini API with model: gemini-flash-latest");
     const result = await model.generateContent({
-      contents: historyContents,
+      contents: [...historyContents, { role: "user", parts: [{ text: message }] }],
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 300,
       },
     });
 
-    const text = result.response.text();
+    const response = await result.response;
+    const text = response.text();
+    console.log("Gemini API success!");
     return text ? text.trim() : null;
   } catch (error) {
     console.error("Gemini API error:", error.message);
